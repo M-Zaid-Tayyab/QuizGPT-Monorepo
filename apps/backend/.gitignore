@@ -1,0 +1,26 @@
+# Backend specific files (in addition to root .gitignore)
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Upload directories
+uploads/
+public/uploads/
+
+# PM2 process files
+.pm2/
+
+# Local development files
+.env.local
+.env.development.local
+.env.test.local
+
+# Log files specific to backend
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/

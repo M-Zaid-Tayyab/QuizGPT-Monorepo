@@ -1,0 +1,26 @@
+{
+  "name": "quizgpt",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "install:all": "yarn install && yarn workspace quizgpt install && yarn workspace quizgpt-backend install",
+    "mobile": "yarn workspace quizgpt start",
+    "mobile:android": "yarn workspace quizgpt android",
+    "mobile:ios": "yarn workspace quizgpt ios",
+    "backend": "yarn workspace quizgpt-backend dev",
+    "backend:build": "yarn workspace quizgpt-backend build",
+    "backend:start": "yarn workspace quizgpt-backend start",
+    "mobile:build": "yarn workspace quizgpt expo build",
+    "mobile:build:android": "yarn workspace quizgpt expo build:android",
+    "mobile:build:ios": "yarn workspace quizgpt expo build:ios",
+    "clean": "yarn workspace quizgpt expo r -c && yarn workspace quizgpt-backend rm -rf dist",
+    "lint": "yarn workspace quizgpt lint",
+    "type-check": "yarn workspace quizgpt tsc --noEmit && yarn workspace quizgpt-backend tsc --noEmit"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  }
+}

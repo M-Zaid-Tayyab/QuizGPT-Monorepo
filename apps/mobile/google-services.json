@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "139831633246",
+    "project_id": "quizgpt-21178",
+    "storage_bucket": "quizgpt-21178.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139831633246:android:dcc6b68a2982bfc6a55bcf",
+        "android_client_info": {
+          "package_name": "com.quizgpt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEnmAlma9s5CEoCUw5CI5-FsBgg6pPiA0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
