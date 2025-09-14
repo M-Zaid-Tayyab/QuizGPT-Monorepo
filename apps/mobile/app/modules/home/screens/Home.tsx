@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
-import { Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import AnimatedLoadingModal from "@/app/components/AnimatedLoadingModal";
 import FeedbackModal from "@/app/components/FeedbackModal";
-// Input is no longer used directly on this screen
+import Input from "@/app/components/Input";
 import PrimaryButton from "@/app/components/PrimaryButton";
 import SkeletonPlaceholder from "@/app/components/SkeltonPlaceholder";
 import { client } from "@/app/services";
@@ -14,11 +14,13 @@ import { icn } from "@/assets/icn";
 import { useNavigation } from "@react-navigation/native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
+import { customEvent } from "vexo-analytics";
 import { useUserStore } from "../../auth/store/userStore";
-import { UploadedFile } from "../components/FileUpload";
-import PromptComposer from "../components/PromptComposer";
+import FileUpload, { UploadedFile } from "../components/FileUpload";
 import StreakCalendar from "../components/StreakCalendar";
-// Unified input: prompt + file/image (no tabs)
+import TabSelector from "../components/TabSelector";
+
+type ActiveTab = "prompt" | "file";
 
 const Home: React.FC = () => {
   const navigation = useNavigation();
@@ -32,6 +34,7 @@ const Home: React.FC = () => {
     setLastQuizDate,
     isProUser,
   } = useUserStore();
+  const [activeTab, setActiveTab] = useState<ActiveTab>("file");
   const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
@@ -40,43 +43,6 @@ const Home: React.FC = () => {
       quizPrompt: "",
     },
   });
-
-  const quizPrompt = useWatch({ control, name: "quizPrompt" });
-  // tracked inside PromptComposer; left here for potential analytics
-  // const promptLength = (quizPrompt || "").length;
-  const promptSuggestions = [
-    "Algebra basics with step-by-step",
-    "WW2 key events short quiz",
-    "Human digestive system MCQs",
-    "Python functions and loops",
-  ];
-
-  const popularTemplates = [
-    {
-      title: "Math Fundamentals",
-      prompt: "Algebra and arithmetic basics with examples",
-      emoji: "➗",
-      color: "bg-primary/10",
-    },
-    {
-      title: "History Review",
-      prompt: "WW2 major events and key figures",
-      emoji: "🏛️",
-      color: "bg-purple/10",
-    },
-    {
-      title: "Biology MCQs",
-      prompt: "Human digestive system multiple choice",
-      emoji: "🧬",
-      color: "bg-green-100",
-    },
-    {
-      title: "Python Basics",
-      prompt: "Functions, loops and lists in Python",
-      emoji: "🐍",
-      color: "bg-yellow-100",
-    },
-  ];
 
   const getUser = async () => {
     const response = await client.get("auth/user");
@@ -89,12 +55,12 @@ const Home: React.FC = () => {
     queryKey: ["user", user?.token],
     queryFn: getUser,
     retry: false,
-    throwOnError: (error: any) => {
+    throwOnError: (error) => {
       if (error?.response?.status === 401) {
         mmkv.clearAll();
         logout();
         queryClient.clear();
-        (navigation as any).reset({
+        navigation.reset({
           index: 0,
           routes: [{ name: "Auth" }],
         });
@@ -130,8 +96,7 @@ const Home: React.FC = () => {
   };
 
   const quizMutation = useMutation({
-    mutationFn: (data: { prompt?: string; file?: UploadedFile | null }) => {
-      // If a file or image is present, send multipart including prompt (if any)
+    mutationFn: (data: { prompt?: string; file?: UploadedFile }) => {
       if (data.file) {
         const formData = new FormData();
         formData.append("file", {
@@ -139,19 +104,14 @@ const Home: React.FC = () => {
           type: data.file.type,
           name: data.file.name,
         } as any);
-        if (data.prompt) {
-          formData.append("prompt", data.prompt);
-        }
         return client.post("quiz/generate", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
+      } else {
+        return client.get(`quiz/generate?prompt=${data.prompt}`);
       }
-      // Otherwise, send prompt-only query
-      return client.get(
-        `quiz/generate?prompt=${encodeURIComponent(data.prompt || "")}`
-      );
     },
   });
 
@@ -163,15 +123,21 @@ const Home: React.FC = () => {
       const diffHours = diffTime / (1000 * 60 * 60);
 
       if (diffHours < 24) {
-        (navigation as any).navigate("Paywall");
+        navigation.navigate("Paywall");
         return;
       }
     }
 
-    const payload = {
-      prompt: data.quizPrompt?.trim() || undefined,
-      file: selectedFile,
-    } as { prompt?: string; file?: UploadedFile | null };
+    let payload = {};
+    if (activeTab === "prompt") {
+      payload = {
+        prompt: data.quizPrompt,
+      };
+    } else {
+      payload = {
+        file: selectedFile,
+      };
+    }
     quizMutation.mutate(payload, {
       onSuccess: (data) => {
         setLastQuizDate(new Date().toISOString());
@@ -189,9 +155,8 @@ const Home: React.FC = () => {
   };
 
   const showGenerateButton = useMemo(() => {
-    const hasPrompt = (quizPrompt || "").trim().length >= 3;
-    return hasPrompt || !!selectedFile;
-  }, [quizPrompt, selectedFile]);
+    return activeTab === "prompt" ? true : !!selectedFile;
+  }, [activeTab, selectedFile]);
 
   const handleFileSelect = (file: UploadedFile) => {
     setSelectedFile(file);
@@ -201,7 +166,15 @@ const Home: React.FC = () => {
     setSelectedFile(null);
   };
 
-  // no-op
+  const handleTabChange = useCallback(
+    (tab: ActiveTab) => {
+      setActiveTab(tab);
+      customEvent("Home_Quiz_Tab_Changed_To", { tab });
+      reset();
+      setSelectedFile(null);
+    },
+    [reset, setSelectedFile, setActiveTab]
+  );
 
   if (isLoading) {
     return (
@@ -219,99 +192,125 @@ const Home: React.FC = () => {
             <SkeletonPlaceholder className="w-full h-14 rounded-xl" />
           </View>
         </View>
-        <View className="mt-6">
-          <Text className="text-lg font-nunito-bold text-textPrimary mb-3">
-            Popular Templates
-          </Text>
-          <View className="flex-row flex-wrap -mx-1">
-            {popularTemplates.map((t, idx) => (
-              <TouchableOpacity
-                key={idx}
-                onPress={() => reset({ quizPrompt: t.prompt })}
-                className="w-1/2 px-1 mb-2"
-                activeOpacity={0.85}
-              >
-                <View
-                  className={`rounded-2xl p-4 border border-gray-100 ${t.color}`}
-                >
-                  <Text className="text-2xl mb-2">{t.emoji}</Text>
-                  <Text className="font-nunito-semibold text-textPrimary">
-                    {t.title}
-                  </Text>
-                  <Text
-                    className="text-xs text-textSecondary font-nunito mt-1"
-                    numberOfLines={2}
-                  >
-                    {t.prompt}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-background">
-      <KeyboardAwareScrollView
-        className="flex-1"
-        contentContainerClassName="bg-background px-4 pt-safe pb-28"
-        showsVerticalScrollIndicator={false}
-        enableOnAndroid
-        keyboardShouldPersistTaps="handled"
-      >
-        <StreakCalendar user={user} className="mt-4" />
+    <KeyboardAwareScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="bg-background px-4 pt-safe flex-grow"
+      showsVerticalScrollIndicator={false}
+      enableOnAndroid
+      keyboardShouldPersistTaps="handled"
+    >
+      <StreakCalendar user={user} className="mt-4" />
 
-        <View className="mt-8">
-          <Text className="text-2xl font-nunito-bold text-textPrimary">
-            Create Your Quiz
-          </Text>
-          <Text className="text-textSecondary font-nunito text-base mt-2">
-            Compose your prompt and attach material in one place
-          </Text>
+      <View className="mt-8">
+        <Text className="text-2xl font-nunito-bold text-textPrimary">
+          Create Your Quiz
+        </Text>
+        <Text className="text-textSecondary font-nunito text-base mt-2">
+          Choose how you&apos;d like to generate your quiz
+        </Text>
 
-          <Controller
-            control={control}
-            name="quizPrompt"
-            render={({ field: { onChange, value } }) => (
-              <PromptComposer
-                prompt={value}
-                onPromptChange={onChange}
-                onClearPrompt={() => reset({ quizPrompt: "" })}
-                suggestions={promptSuggestions}
-                selectedFile={selectedFile}
-                onFileSelect={handleFileSelect}
-                onFileRemove={handleFileRemove}
-                className="mt-6"
-              />
-            )}
-          />
-        </View>
-      </KeyboardAwareScrollView>
-
-      <View className="px-4 pb-safe pt-3 bg-background/95 border-t border-gray-100 absolute bottom-0 left-0 right-0">
-        <PrimaryButton
-          title={quizMutation.isPending ? "Generating..." : "Generate Quiz"}
-          onPress={handleSubmit(onGenerateQuiz)}
-          leftIcon={icn.generate}
-          className=""
-          disabled={!showGenerateButton || quizMutation.isPending}
+        <TabSelector
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          className="mt-4"
         />
-        {!showGenerateButton && (
-          <Text className="text-center text-textSecondary text-xs font-nunito mt-2">
-            Enter a prompt or attach a file/image to continue
-          </Text>
+
+        {activeTab === "prompt" ? (
+          <View className="bg-white rounded-xl shadow-sm mt-6 p-4">
+            <View className="flex-row items-center">
+              <View className="bg-primary/10 rounded-lg p-2 mr-3">
+                <Text className="text-2xl">💭</Text>
+              </View>
+              <View>
+                <Text className="text-lg font-nunito-bold text-textPrimary">
+                  Text Prompt
+                </Text>
+                <Text className="text-textSecondary font-nunito text-sm">
+                  Describe what you want to learn about
+                </Text>
+              </View>
+            </View>
+
+            <Controller
+              control={control}
+              name="quizPrompt"
+              rules={{
+                required: "Please enter some words for the quiz",
+                minLength: {
+                  value: 3,
+                  message: "Please enter at least 3 characters",
+                },
+              }}
+              render={({
+                field: { onChange, value },
+                fieldState: { error },
+              }) => (
+                <>
+                  <Input
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="e.g., Quiz me on solving linear equations step by step, Test my knowledge of common English spelling rules, Test my understanding of the human digestive system..."
+                    multiline
+                    numberOfCharacter={10000}
+                    className="h-52 py-3 mt-6"
+                    inputClassName="h-full"
+                    inputStyle={{
+                      textAlignVertical: "top",
+                    }}
+                  />
+                  {error && (
+                    <Text className="text-red text-sm mb-4 font-nunito">
+                      {error.message}
+                    </Text>
+                  )}
+                </>
+              )}
+            />
+          </View>
+        ) : (
+          <View className="bg-white rounded-xl mt-6 shadow-sm p-4">
+            <View className="flex-row items-center">
+              <View className="bg-primary/10 rounded-lg mr-3 p-1">
+                <Text className="text-2xl">📄</Text>
+              </View>
+              <View>
+                <Text className="text-lg font-nunito-bold text-textPrimary">
+                  File Upload
+                </Text>
+                <Text className="text-textSecondary font-nunito text-sm">
+                  Upload a PDF or image to generate quiz from content
+                </Text>
+              </View>
+            </View>
+
+            <FileUpload
+              onFileSelect={handleFileSelect}
+              onFileRemove={handleFileRemove}
+              selectedFile={selectedFile}
+              className="mt-6"
+            />
+          </View>
         )}
       </View>
-
+      {showGenerateButton && (
+        <PrimaryButton
+          title={"Generate Quiz"}
+          onPress={handleSubmit(onGenerateQuiz)}
+          leftIcon={icn.generate}
+          className="mt-10 mb-3"
+        />
+      )}
       <AnimatedLoadingModal isVisible={quizMutation.isPending} />
       <FeedbackModal
         isVisible={showFeedbackModal}
         onClose={handleFeedbackModalClose}
       />
-    </View>
+    </KeyboardAwareScrollView>
   );
 };
 

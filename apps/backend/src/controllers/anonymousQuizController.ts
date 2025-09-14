@@ -1,14 +1,14 @@
 import dotenv from "dotenv";
 import { Response } from "express";
 import OpenAI from "openai";
-import { AnonymousAuthRequest } from "../middleware/anonymousAuthMiddleware";
-import Quiz from "../models/quizModel";
-import AnonymousUser from "../models/anonymousUserModel";
 import {
-  extractTextFromPDF,
   extractTextFromImage,
+  extractTextFromPDF,
   validateFileType,
 } from "../helpers/textExtractionHelper";
+import { AnonymousAuthRequest } from "../middleware/anonymousAuthMiddleware";
+import AnonymousUser from "../models/anonymousUserModel";
+import Quiz from "../models/quizModel";
 dotenv.config();
 
 const openai = new OpenAI({
@@ -39,11 +39,9 @@ export const generateAnonymousQuiz = async (
       const fileType = validateFileType(req.file.mimetype);
 
       if (fileType === "invalid") {
-        res
-          .status(400)
-          .json({
-            message: "Invalid file type. Only PDF and image files are allowed.",
-          });
+        res.status(400).json({
+          message: "Invalid file type. Only PDF and image files are allowed.",
+        });
         return;
       }
 
@@ -55,12 +53,10 @@ export const generateAnonymousQuiz = async (
         }
 
         if (!description || description.trim().length === 0) {
-          res
-            .status(400)
-            .json({
-              message:
-                "No text could be extracted from the uploaded file. Please try a different file or use a text prompt.",
-            });
+          res.status(400).json({
+            message:
+              "No text could be extracted from the uploaded file. Please try a different file or use a text prompt.",
+          });
           return;
         }
 
@@ -69,22 +65,18 @@ export const generateAnonymousQuiz = async (
         }
       } catch (error) {
         console.error("Error extracting text from file:", error);
-        res
-          .status(500)
-          .json({
-            message: "Error processing the uploaded file. Please try again.",
-          });
+        res.status(500).json({
+          message: "Error processing the uploaded file. Please try again.",
+        });
         return;
       }
     } else {
       description = req.query.prompt as string;
 
       if (!description) {
-        res
-          .status(400)
-          .json({
-            message: "Either a prompt or a file (PDF/image) is required",
-          });
+        res.status(400).json({
+          message: "Either a prompt or a file (PDF/image) is required",
+        });
         return;
       }
     }
@@ -381,14 +373,15 @@ export const explainAnswer = async (
       return;
     }
     const { age, grade, gender } = user;
-    const { quizId, questionIndex, correctAnswerIndex, selectedAnswerIndex } = req.body as {
-      quizId: string;
-      questionIndex: number;
-      correctAnswerIndex: number;
-      selectedAnswerIndex: number;
-    };
+    const { quizId, questionIndex, correctAnswerIndex, selectedAnswerIndex } =
+      req.body as {
+        quizId: string;
+        questionIndex: number;
+        correctAnswerIndex: number;
+        selectedAnswerIndex: number;
+      };
 
-    if (!quizId ) {
+    if (!quizId) {
       res.status(400).json({ message: "Quiz ID is required" });
       return;
     }
@@ -409,7 +402,7 @@ export const explainAnswer = async (
       return;
     }
 
-      const prompt = `Explain why you think the answer to the question: ${question.question} is "${question.options[correctAnswerIndex]}" and not "${question.options[selectedAnswerIndex]}" in a way that is easy to understand for a ${age} year old ${gender} kid in ${grade} grade for educational purposes with an example in 3-5 sentences.`;
+    const prompt = `Explain why you think the answer to the question: ${question.question} is "${question.options[correctAnswerIndex]}" and not "${question.options[selectedAnswerIndex]}" in a way that is easy to understand for a ${age} year old ${gender} kid in ${grade} grade for educational purposes with an example in 3-5 sentences.`;
 
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],

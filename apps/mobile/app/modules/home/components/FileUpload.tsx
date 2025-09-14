@@ -61,22 +61,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
-  const pickFromGallery = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      selectionLimit: 1,
-      quality: 1,
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      onFileSelect({
-        uri: asset.uri,
-        name: asset.fileName || "image.jpg",
-        type: asset.mimeType || "image/jpeg",
-      });
-    }
-  };
-
   return (
     <View className={clsx("w-full", className)}>
       {selectedFile ? (
@@ -163,20 +147,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </View>
             </View>
           </TouchableOpacity>
-          <View className="flex-row mt-4">
+          <View className="flex-row space-x-3">
             <TouchableOpacity
               onPress={pickImage}
-              className="flex-1 bg-primary rounded-lg py-4 items-center flex-row justify-center mr-2"
+              className="flex-1 bg-primary rounded-lg py-4 items-center flex-row justify-center mt-6"
             >
               <Ionicons name="camera" size={20} color={colors.white} />
               <Text className="text-white font-nunito-bold ml-2">Capture</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={pickFromGallery}
-              className="flex-1 bg-textPrimary rounded-lg py-4 items-center flex-row justify-center ml-2"
-            >
-              <Ionicons name="images" size={20} color={colors.white} />
-              <Text className="text-white font-nunito-bold ml-2">Gallery</Text>
             </TouchableOpacity>
           </View>
 

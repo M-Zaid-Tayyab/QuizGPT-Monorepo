@@ -84,7 +84,7 @@ Example format:
       title: response.title,
       questions: response.questions,
       createdBy: userId,
-      userType: 'user',
+      userType: "user",
     });
 
     res.status(201).json(quiz);

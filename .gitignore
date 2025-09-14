@@ -9,6 +9,10 @@ build/
 .next/
 out/
 
+apps/backend/dist/
+apps/mobile/android/
+apps/mobile/ios/
+
 # Environment variables
 .env
 .env.local

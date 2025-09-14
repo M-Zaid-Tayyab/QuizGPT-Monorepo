@@ -1,10 +1,10 @@
+import cors from "cors";
+import dotenv from "dotenv";
 import express from "express";
 import connectDB from "./config/db";
-import authRoutes from "./routes/authRoutes";
 import anonymousAuthRoutes from "./routes/anonymousAuthRoutes";
 import anonymousQuizRoutes from "./routes/anonymousQuizRoutes";
-import dotenv from "dotenv";
-import cors from "cors";
+import authRoutes from "./routes/authRoutes";
 import quizRoutes from "./routes/quizRoutes";
 dotenv.config();
 
