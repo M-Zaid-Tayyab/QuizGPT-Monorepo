@@ -66,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({
         {showBackButton && (
           <TouchableOpacity
             onPress={onBackPress || (() => navigation.goBack())}
-            className={`p-2 rounded-full ${backButtonClassName}`}
+            className={`${backButtonClassName}`}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons
