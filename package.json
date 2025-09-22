@@ -24,8 +24,5 @@
   },
   "devDependencies": {
     "turbo": "^2.0.0"
-  },
-  "dependencies": {
-    "react-native-worklets": "^0.0.1"
   }
 }
