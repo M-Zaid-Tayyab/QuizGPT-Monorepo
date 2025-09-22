@@ -6,6 +6,8 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
+    "start": "yarn workspace quizgpt-backend start",
+    "build": "yarn workspace quizgpt-backend build",
     "install:all": "yarn install && yarn workspace quizgpt install && yarn workspace quizgpt-backend install",
     "mobile": "yarn workspace quizgpt start",
     "mobile:android": "yarn workspace quizgpt android",
