@@ -68,7 +68,7 @@ const ContinueLearningSheet: React.FC<ContinueLearningSheetProps> = ({
           />
         </View>
         <PrimaryButton
-          title="Continue Learning"
+          title="Continue"
           onPress={handleContinue}
           className="w-full rounded-2xl mt-10 mb-safe"
         />

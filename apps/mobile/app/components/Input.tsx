@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import {
   ImageStyle,
   KeyboardTypeOptions,
+  Platform,
   Pressable,
   StyleProp,
   StyleSheet,
@@ -45,6 +46,7 @@ export interface InputProps {
   className?: string;
   inputClassName?: string;
   autoFocus?: boolean;
+  leftIcon?: () => React.ReactNode;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -75,6 +77,7 @@ const Input: React.FC<InputProps> = ({
   className,
   inputClassName,
   autoFocus,
+  leftIcon,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -98,12 +101,24 @@ const Input: React.FC<InputProps> = ({
       style={containerStyle}
       onLayout={onLayout}
     >
+      {leftIcon && leftIcon()}
       <TextInput
         className={clsx(
           "flex-1 text-base text-textPrimary font-nunito py-0 h-full",
           inputClassName
         )}
-        style={[inputStyle]}
+        style={[
+          Platform.OS === "android"
+            ? {
+                textAlignVertical: "center",
+                includeFontPadding: false,
+                paddingVertical: 0,
+              }
+            : {
+                lineHeight: 0,
+              },
+          inputStyle,
+        ]}
         onChangeText={onChangeText}
         value={value}
         multiline={multiline}

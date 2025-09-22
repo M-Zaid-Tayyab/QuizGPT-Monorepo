@@ -18,7 +18,9 @@
     "mobile:build:ios": "yarn workspace quizgpt expo build:ios",
     "clean": "yarn workspace quizgpt expo r -c && yarn workspace quizgpt-backend rm -rf dist",
     "lint": "yarn workspace quizgpt lint",
-    "type-check": "yarn workspace quizgpt tsc --noEmit && yarn workspace quizgpt-backend tsc --noEmit"
+    "type-check": "yarn workspace quizgpt tsc --noEmit && yarn workspace quizgpt-backend tsc --noEmit",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "devDependencies": {
     "turbo": "^2.0.0"

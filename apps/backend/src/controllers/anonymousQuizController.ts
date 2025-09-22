@@ -46,13 +46,14 @@ export const generateAnonymousQuiz = async (
       }
 
       try {
+        let fileText: string;
         if (fileType === "pdf") {
-          description = await extractTextFromPDF(req.file.buffer);
+          fileText = await extractTextFromPDF(req.file.buffer);
         } else {
-          description = await extractTextFromImage(req.file.buffer);
+          fileText = await extractTextFromImage(req.file.buffer);
         }
 
-        if (!description || description.trim().length === 0) {
+        if (!fileText || fileText.trim().length === 0) {
           res.status(400).json({
             message:
               "No text could be extracted from the uploaded file. Please try a different file or use a text prompt.",
@@ -60,8 +61,16 @@ export const generateAnonymousQuiz = async (
           return;
         }
 
-        if (description.length > 2000) {
-          description = description.substring(0, 2000) + "...";
+        if (fileText.length > 2000) {
+          fileText = fileText.substring(0, 2000) + "...";
+        }
+
+        const userPrompt = req.body.prompt;
+
+        if (userPrompt && userPrompt.trim()) {
+          description = `Topic/Instruction: ${userPrompt}\n\nSyllabus/Study Material:\n${fileText}`;
+        } else {
+          description = `Syllabus/Study Material:\n${fileText}`;
         }
       } catch (error) {
         console.error("Error extracting text from file:", error);
@@ -81,29 +90,48 @@ export const generateAnonymousQuiz = async (
       }
     }
 
-    const prompt = `Create an educational, academic, and highly engaging quiz about the topic "${description}" designed for ${age} age group in ${grade} grade. The quiz should have a "${difficulty}" level of challenge.
+    const prompt = `Create a comprehensive academic quiz designed specifically for ${age}-year-old students in ${grade} grade to help them excel in their exams. The quiz should have a "${difficulty}" difficulty level.
 
-### 🎯 Goals:
-- Make the quiz feel like a game, not a test.
-- Use imaginative, real-world, or playful scenarios to explain concepts.
-- Include surprising, creative, and unpredictable elements.
-- Keep questions short, challenging, and relevant to the topic.
-- Randomize both the questions and the order of the options.
-- Each question should encourage curiosity and critical thinking.
+### 📖 Study Context:
+${description}
 
-Format the response as a JSON object with a title (without using words like Quiz, Challenge, Test, etc. because the user will see it and we don't want to show it because he already knows it) and a "questions" array with 10 questions where each question object has:
+### 🎯 Academic Goals:
+- Focus on key concepts, definitions, and facts that commonly appear in exams
+- Include questions that test understanding, application, and critical thinking
+- Cover important topics, formulas, processes, and relationships from the syllabus
+- Use clear, precise language appropriate for academic assessment
+- Include both factual recall and problem-solving questions
+- Ensure questions are directly relevant to curriculum and exam patterns
+- If a specific topic/instruction is provided, prioritize that focus area
+- If syllabus material is provided, ensure questions align with the official curriculum
+
+### 📚 Question Types to Include:
+- Definition and concept questions
+- Process and procedure questions  
+- Problem-solving and application questions
+- Comparison and analysis questions
+- Formula and calculation questions (if applicable)
+
+### 🎓 Exam Preparation Focus:
+- Questions should mirror actual exam question styles
+- Include common misconceptions as incorrect options
+- Test both surface knowledge and deep understanding
+- Cover the most important and frequently tested topics
+- Use academic terminology and precise language
+
+Format the response as a JSON object with a title that clearly indicates the topic (avoid generic words like "Quiz" or "Test") and a "questions" array with 10 questions where each question object has:
 - question: the question text (required)
-- options: array of 4 options (required)
+- options: array of 4 options (required) 
 - correctAnswer: index of the correct answer (0-3) (required)
 
 Example format:
 {
-  "title": "Animals Characteristics",
+  "title": "Photosynthesis Process",
   "questions": [
     {
-      "question": "Which of these animals can fly?",
-      "options": ["Dog", "Elephant", "Parrot", "Lion"],
-      "correctAnswer": 2
+      "question": "What is the primary function of chlorophyll in photosynthesis?",
+      "options": ["Store glucose", "Absorb light energy", "Release oxygen", "Break down water"],
+      "correctAnswer": 1
     }
   ]
 }`;
@@ -297,23 +325,31 @@ export const continueLearning = async (
       .map((q, index) => `${index + 1}. ${q.question}`)
       .join("\n");
 
-    const prompt = `Continue the educational quiz about "${quiz.description}" based on the user's request: "${userPrompt}"
+    const prompt = `Continue the academic quiz about "${quiz.description}" based on the user's request: "${userPrompt}"
 
 ### 🎯 Context:
-This is a continuation of an existing quiz. Please generate 5 NEW questions that:
-- Build upon the existing topic and difficulty level
+This is a continuation of an existing exam preparation quiz. Please generate 5 NEW questions that:
+- Build upon the existing topic and difficulty level for continued practice
 - Are completely different from the existing questions
-- Follow the same engaging, game-like style
-- Maintain the educational value and fun factor
+- Focus on exam preparation and academic assessment
+- Cover additional important concepts from the same syllabus/topic
+- Test deeper understanding and application of the subject matter
 
 ### 📝 Existing Questions (to avoid duplicates):
 ${existingQuestions}
 
+### 🎓 Exam Preparation Focus:
+- Generate questions that complement the existing ones for comprehensive coverage
+- Include questions that test different aspects of the same topic
+- Focus on commonly tested concepts that might have been missed
+- Ensure questions are directly relevant to exam patterns and curriculum
+- Use academic terminology and precise language
+
 ### 🚫 Important:
 - DO NOT repeat any of the existing questions above
-- Create completely new, unique questions
-- Maintain the same format and style
-- Keep questions challenging and engaging
+- Create completely new, unique questions that add value to exam preparation
+- Maintain the same academic rigor and format
+- Keep questions challenging and relevant to actual exams
 
 Format the response as a JSON object with a "questions" array where each question object has:
 - question: the question text (required)
@@ -324,7 +360,7 @@ Example format:
 {
   "questions": [
     {
-      "question": "Which of these is a new concept related to the topic?",
+      "question": "What is the primary mechanism behind this process?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctAnswer": 2
     }
