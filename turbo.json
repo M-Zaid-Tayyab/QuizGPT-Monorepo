@@ -8,6 +8,50 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**"]
+    },
+    "eas:build:dev": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:build:preview": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:build:production": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:build:apk": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:build:all": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:build:android": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:build:ios": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:update:dev": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:update:preview": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:update:production": {
+      "cache": false,
+      "persistent": false
+    },
+    "eas:update:apk": {
+      "cache": false,
+      "persistent": false
     }
   }
 }
