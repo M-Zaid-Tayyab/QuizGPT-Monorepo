@@ -90,7 +90,9 @@ const Input: React.FC<InputProps> = ({
 
   return (
     <View
-      className={`flex-row items-center border rounded-lg px-3 py-2 bg-white h-12
+      className={`flex-row items-center border rounded-lg px-3 py-2 bg-white ${
+        multiline ? "min-h-12" : "h-12"
+      }
         ${className} ${
         error
           ? "border-red-500"

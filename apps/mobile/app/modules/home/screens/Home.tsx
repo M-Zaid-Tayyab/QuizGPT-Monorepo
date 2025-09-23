@@ -184,6 +184,7 @@ const Home: React.FC = () => {
       <KeyboardAwareScrollView
         contentContainerClassName="px-4 flex-grow"
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         bounces={false}
         enableOnAndroid
       >
