@@ -166,15 +166,13 @@ const Home: React.FC = () => {
           <View className="bg-white rounded-2xl shadow-sm p-4 mt-6 mb-8">
             <SkeletonPlaceholder className="w-full h-24 rounded-xl" />
           </View>
-          <SkeletonPlaceholder className="w-64 h-8 rounded-lg mb-2" />
-          <SkeletonPlaceholder className="w-80 h-5 rounded-lg mb-8" />
+          <SkeletonPlaceholder className="w-64 h-8 rounded-lg mb-2 mt-2" />
           <SkeletonPlaceholder className="w-full h-14 rounded-xl mb-8" />
-          <View className="bg-white rounded-2xl shadow-sm p-4">
-            <SkeletonPlaceholder className="w-48 h-6 rounded-lg mb-4" />
+          <View className="bg-white rounded-2xl shadow-sm p-4 mt-6">
             <SkeletonPlaceholder className="w-full h-64 rounded-xl mb-6" />
-            <SkeletonPlaceholder className="w-full h-14 rounded-xl" />
           </View>
         </View>
+        <SkeletonPlaceholder className="w-full h-16 rounded-lg self-center absolute bottom-4" />
       </View>
     );
   }
