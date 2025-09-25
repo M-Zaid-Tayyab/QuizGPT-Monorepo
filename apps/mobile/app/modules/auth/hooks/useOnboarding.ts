@@ -4,6 +4,7 @@ import { useUserStore } from "@/modules/auth/store/userStore";
 import { useNavigation } from "@react-navigation/native";
 import * as Crypto from "expo-crypto";
 import * as Haptics from "expo-haptics";
+import * as StoreReview from "expo-store-review";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useAnimatedStyle,
@@ -62,6 +63,168 @@ export const useOnboarding = () => {
   const questions: Question[] = [
     {
       id: 1,
+      question: "What's your biggest study challenge?",
+      subtitle: "Help us understand what's holding you back",
+      icon: "alert-circle-outline",
+      iconColor: colors.primary,
+      options: [
+        {
+          label: "Can't find practice questions",
+          value: "memory_retention",
+          icon: "search-outline",
+          color: colors.warning,
+          description: "No relevant practice questions",
+        },
+        {
+          label: "Don't know how to test myself",
+          value: "time_management",
+          icon: "help-circle-outline",
+          color: colors.primary,
+          description: "Struggling with self-assessment",
+        },
+        {
+          label: "Too much content to study",
+          value: "overwhelmed",
+          icon: "trending-down-outline",
+          color: colors.error,
+          description: "Too much material to process",
+        },
+        {
+          label: "Need exam-style questions",
+          value: "focus_issues",
+          icon: "school-outline",
+          color: colors.blue,
+          description: "Want exam-style practice",
+        },
+        {
+          label: "Not sure what's important",
+          value: "exam_anxiety",
+          icon: "eye-off-outline",
+          color: colors.pink,
+          description: "Don't know what to focus on",
+        },
+      ],
+    },
+    {
+      id: 2,
+      question: "How do you currently prepare for exams?",
+      subtitle: "Understanding your current study methods",
+      icon: "book-outline",
+      iconColor: colors.primary,
+      options: [
+        {
+          label: "Search for questions online",
+          value: "rereading",
+          icon: "search-outline",
+          color: colors.warning,
+          description: "Hunting for relevant questions",
+        },
+        {
+          label: "Use generic study apps",
+          value: "highlighting",
+          icon: "phone-portrait-outline",
+          color: colors.blue,
+          description: "One-size-fits-all content",
+        },
+        {
+          label: "Just reread materials",
+          value: "practice_problems",
+          icon: "refresh-outline",
+          color: colors.success,
+          description: "Passive reading approach",
+        },
+        {
+          label: "Study with friends",
+          value: "study_groups",
+          icon: "people-outline",
+          color: colors.purple,
+          description: "Collaborative learning",
+        },
+        {
+          label: "Don't have a system",
+          value: "no_system",
+          icon: "help-circle-outline",
+          color: colors.error,
+          description: "Wing it and hope",
+        },
+      ],
+    },
+    {
+      id: 3,
+      question: "How confident do you feel before exams?",
+      subtitle: "Understanding your exam anxiety levels",
+      icon: "heart-outline",
+      iconColor: colors.primary,
+      options: [
+        {
+          label: "Very confident",
+          value: "very_confident",
+          icon: "checkmark-circle",
+          color: colors.success,
+          description: "I'm well prepared",
+        },
+        {
+          label: "Somewhat confident",
+          value: "somewhat_confident",
+          icon: "thumbs-up-outline",
+          color: colors.blue,
+          description: "I'll probably do okay",
+        },
+        {
+          label: "Not very confident",
+          value: "not_confident",
+          icon: "thumbs-down-outline",
+          color: colors.warning,
+          description: "I'm worried",
+        },
+        {
+          label: "Panic mode",
+          value: "panic_mode",
+          icon: "alert-circle",
+          color: colors.error,
+          description: "I'm terrified",
+        },
+      ],
+    },
+    {
+      id: 4,
+      question: "What type of study materials do you use?",
+      subtitle: "This helps us understand your study content",
+      icon: "library-outline",
+      iconColor: colors.primary,
+      options: [
+        {
+          label: "Textbooks & PDFs",
+          value: "textbooks_pdfs",
+          icon: "book-outline",
+          color: colors.lightPink,
+          description: "Traditional study materials",
+        },
+        {
+          label: "Lecture notes & slides",
+          value: "lecture_notes",
+          icon: "document-text-outline",
+          color: colors.warning,
+          description: "Class-based content",
+        },
+        {
+          label: "Research papers",
+          value: "research_papers",
+          icon: "library-outline",
+          color: colors.success,
+          description: "Academic sources",
+        },
+        {
+          label: "Mixed materials",
+          value: "mixed_materials",
+          icon: "grid-outline",
+          color: colors.blue,
+          description: "Various content types",
+        },
+      ],
+    },
+    {
+      id: 5,
       question: "How old are you?",
       subtitle: "This helps us create age-appropriate content",
       icon: "person-outline",
@@ -92,127 +255,83 @@ export const useOnboarding = () => {
       ],
     },
     {
-      id: 2,
-      question: "What's your gender?",
-      subtitle:
-        "We respect all identities and use this for personalized content",
-      icon: "heart-outline",
-      iconColor: colors.primary,
-      options: [
-        { label: "Male", value: "Male", icon: "male", color: colors.purple },
-        {
-          label: "Female",
-          value: "Female",
-          icon: "female",
-          color: colors.primary,
-        },
-        {
-          label: "Other",
-          value: "Other",
-          icon: "people-outline",
-          color: colors.pink,
-        },
-      ],
-    },
-    {
-      id: 3,
-      question: "What's your education level?",
-      subtitle: "This helps us match content to your learning stage",
-      icon: "library-outline",
+      id: 6,
+      question: "What subjects do you struggle with most?",
+      subtitle: "We'll create targeted content for your weak areas",
+      icon: "school-outline",
       iconColor: colors.primary,
       options: [
         {
-          label: "School",
-          value: "School",
-          icon: "school-outline",
-          color: colors.lightPink,
+          label: "Math & Science",
+          value: "math_science",
+          icon: "calculator-outline",
+          color: colors.blue,
+          description: "Numbers and formulas",
         },
         {
-          label: "College",
-          value: "College",
+          label: "Languages & Literature",
+          value: "languages",
+          icon: "book-outline",
+          color: colors.purple,
+          description: "Reading and writing",
+        },
+        {
+          label: "History & Social Studies",
+          value: "history_social",
           icon: "library-outline",
           color: colors.warning,
+          description: "Memorization heavy",
         },
         {
-          label: "University",
-          value: "University",
-          icon: "school",
-          color: colors.success,
-        },
-        {
-          label: "Post-Graduate",
-          value: "Post-Graduate",
-          icon: "library",
-          color: colors.blue,
+          label: "All subjects",
+          value: "all_subjects",
+          icon: "grid-outline",
+          color: colors.error,
+          description: "Struggling across the board",
         },
       ],
     },
     {
-      id: 4,
-      question: "What's your preferred challenge level?",
-      subtitle: "Choose the difficulty that keeps you engaged",
-      icon: "trending-up-outline",
+      id: 7,
+      question: "What would help you study better?",
+      subtitle: "Tell us what you need most",
+      icon: "bulb-outline",
       iconColor: colors.primary,
       options: [
         {
-          label: "Easy",
-          value: "Easy",
-          icon: "leaf-outline",
+          label: "Exam-style practice questions",
+          value: "exam_practice",
+          icon: "school-outline",
           color: colors.success,
-          description: "Start with basics",
+          description: "I want to know what the real test will be like",
         },
         {
-          label: "Medium",
-          value: "Medium",
-          icon: "fitness-outline",
-          color: colors.warning,
-          description: "Balanced challenge",
+          label: "Practice with my own materials",
+          value: "memory_techniques",
+          icon: "book-outline",
+          color: colors.purple,
+          description: "I want to practice with my notes and textbooks",
         },
         {
-          label: "Hard",
-          value: "Hard",
-          icon: "flash-outline",
+          label: "Know what's important to study",
+          value: "study_structure",
+          icon: "eye-outline",
+          color: colors.blue,
+          description: "I don't know what to focus on from all my materials",
+        },
+        {
+          label: "Regular practice sessions",
+          value: "faster_methods",
+          icon: "refresh-outline",
           color: colors.primary,
-          description: "Push your limits",
-        },
-      ],
-    },
-    {
-      id: 5,
-      question: "Where did you hear about us?",
-      subtitle: "This helps us understand how users discover QuizGPT",
-      icon: "share-social-outline",
-      iconColor: colors.primary,
-      options: [
-        {
-          label: "TikTok",
-          value: "tiktok",
-          icon: "logo-tiktok",
-          color: colors.black,
+          description: "I need to test myself consistently",
         },
         {
-          label: "Instagram",
-          value: "instagram",
-          icon: "logo-instagram",
-          color: colors.pink,
-        },
-        {
-          label: "Play Store",
-          value: "play_store",
-          icon: "logo-google-playstore",
-          color: colors.success,
-        },
-        {
-          label: "Friend's whisper",
-          value: "friend",
-          icon: "people-outline",
-          color: colors.blue,
-        },
-        {
-          label: "Other",
-          value: "other",
-          icon: "question-mark-circle-outline",
-          color: colors.black,
+          label: "Questions that help me remember",
+          value: "all_above",
+          icon: "brain-outline",
+          color: colors.warning,
+          description: "I want effective practice that sticks",
         },
       ],
     },
@@ -244,16 +363,33 @@ export const useOnboarding = () => {
     cardScale.value = withSpring(1, { damping: 15, stiffness: 100 });
     cardOpacity.value = withTiming(1, { duration: 300 });
     iconRotation.value = withSpring(360, { damping: 15, stiffness: 100 });
+
+    if (currentQuestionIndex === questions.length - 1) {
+      requestStoreReview();
+    }
   }, [currentQuestionIndex]);
+
+  const requestStoreReview = async () => {
+    try {
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (isAvailable) {
+        await StoreReview.requestReview();
+      }
+    } catch (error) {
+      console.log("Store review request failed:", error);
+    }
+  };
 
   const handleOnboarding = useCallback(() => {
     const payload = {
       uuid: mmkv.getString("userUUID"),
-      age: parseInt(answers.current["1"]),
-      gender: answers.current["2"],
-      grade: answers.current["3"],
-      difficulty: answers.current["4"],
-      referral: answers.current["5"],
+      biggestChallenge: answers.current["1"],
+      studyMethod: answers.current["2"],
+      examConfidence: answers.current["3"],
+      studyMaterials: answers.current["4"],
+      age: parseInt(answers.current["5"]),
+      strugglingSubjects: answers.current["6"],
+      studyNeeds: answers.current["7"],
     };
     registerMutation.mutate(payload as any, {
       onSuccess: (response) => {
@@ -261,6 +397,15 @@ export const useOnboarding = () => {
         const user = {
           ...response.data.user,
           token: response.data.token,
+          onboardingData: {
+            biggestChallenge: answers.current["1"],
+            studyMethod: answers.current["2"],
+            examConfidence: answers.current["3"],
+            studyMaterials: answers.current["4"],
+            age: answers.current["5"],
+            strugglingSubjects: answers.current["6"],
+            studyNeeds: answers.current["7"],
+          },
         };
         setUser(user);
         navigation.reset({

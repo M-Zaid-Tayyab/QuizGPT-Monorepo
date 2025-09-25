@@ -2,7 +2,10 @@ import axios from "axios";
 import { useUserStore } from "../modules/auth/store/userStore";
 
 const isDev = false;
-const ROOT_URL = isDev
+const isLocal = true;
+const ROOT_URL = isLocal
+  ? "https://8240f37f475d.ngrok-free.app"
+  : isDev
   ? "https://quizgpt-backend-development.up.railway.app"
   : "https://quizgpt-backend-production.up.railway.app";
 const BASE_URL = `${ROOT_URL}/api/anonymous/`;

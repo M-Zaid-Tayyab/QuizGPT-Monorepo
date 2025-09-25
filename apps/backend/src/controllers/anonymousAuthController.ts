@@ -1,14 +1,36 @@
 import dotenv from "dotenv";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import AnonymousUser from "../models/anonymousUserModel";
 import { AnonymousAuthRequest } from "../middleware/anonymousAuthMiddleware";
+import AnonymousUser from "../models/anonymousUserModel";
 
 dotenv.config();
 
-export const createAnonymousUser = async (req: Request, res: Response): Promise<void> => {
+export const createAnonymousUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const { uuid, age, grade, difficulty, gender, isProUser = false, referral } = req.body;
+    const {
+      uuid,
+      // Pain point data (high conversion impact)
+      biggestChallenge,
+      studyMethod,
+      examConfidence,
+      // Study materials (app-specific)
+      studyMaterials,
+      // Demographic data (personalization)
+      age,
+      strugglingSubjects,
+      // Solution intent (purchase intent confirmation)
+      studyNeeds,
+      // Legacy fields (backward compatibility)
+      grade,
+      difficulty,
+      gender,
+      referral,
+      isProUser = false,
+    } = req.body;
 
     if (!uuid) {
       res.status(400).json({ message: "UUID is required" });
@@ -23,12 +45,23 @@ export const createAnonymousUser = async (req: Request, res: Response): Promise<
 
     const user = await AnonymousUser.create({
       _id: uuid,
+      // Pain point data (high conversion impact)
+      biggestChallenge,
+      studyMethod,
+      examConfidence,
+      // Study materials (app-specific)
+      studyMaterials,
+      // Demographic data (personalization)
       age,
+      strugglingSubjects,
+      // Solution intent (purchase intent confirmation)
+      studyNeeds,
+      // Legacy fields (backward compatibility)
       grade,
       difficulty,
       gender,
-      isProUser,
       referral,
+      isProUser,
     });
 
     const token = jwt.sign({ uuid: user._id }, process.env.JWT_SECRET!, {
@@ -89,7 +122,10 @@ export const getAnonymousUserDetails = async (
   }
 };
 
-export const updateAnonymousUser = async (req: AnonymousAuthRequest, res: Response): Promise<void> => {
+export const updateAnonymousUser = async (
+  req: AnonymousAuthRequest,
+  res: Response
+): Promise<void> => {
   try {
     const userUuid = req.anonymousUser._id;
     const user = await AnonymousUser.findById(userUuid);
@@ -99,10 +135,27 @@ export const updateAnonymousUser = async (req: AnonymousAuthRequest, res: Respon
     }
     const updateData = req.body;
     const allowedFields = [
-      'streak', 'statistics', 'age', 'grade', 'difficulty', 'gender', 'isProUser'
+      "streak",
+      "statistics",
+      "isProUser",
+      // Pain point data
+      "biggestChallenge",
+      "studyMethod",
+      "examConfidence",
+      // Study materials
+      "studyMaterials",
+      // Demographic data
+      "age",
+      "strugglingSubjects",
+      // Solution intent
+      "studyNeeds",
+      // Legacy fields
+      "grade",
+      "difficulty",
+      "gender",
     ];
     const filteredUpdateData: any = {};
-    Object.keys(updateData).forEach(key => {
+    Object.keys(updateData).forEach((key) => {
       if (allowedFields.includes(key)) {
         filteredUpdateData[key] = updateData[key];
       }
@@ -111,9 +164,9 @@ export const updateAnonymousUser = async (req: AnonymousAuthRequest, res: Respon
     Object.assign(user, filteredUpdateData);
     await user.save();
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: "User updated successfully",
-      updatedFields: Object.keys(filteredUpdateData)
+      updatedFields: Object.keys(filteredUpdateData),
     });
   } catch (error) {
     console.error("Error updating anonymous user:", error);

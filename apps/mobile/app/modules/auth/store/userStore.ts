@@ -6,6 +6,14 @@ export type User = {
   name: string;
   email: string;
   token?: string;
+  onboardingData?: {
+    biggestChallenge?: string;
+    studyMethod?: string;
+    studyTime?: string;
+    strugglingSubjects?: string;
+    examConfidence?: string;
+    studyNeeds?: string;
+  };
 };
 
 interface UserState {

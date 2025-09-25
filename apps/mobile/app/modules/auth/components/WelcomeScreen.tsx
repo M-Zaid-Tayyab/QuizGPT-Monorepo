@@ -35,8 +35,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           Meet <Text className="text-primary">QuizGPT</Text>
         </Text>
 
-        <Text className="text-xl text-textSecondary text-center font-nunito-medium mb-8 leading-6">
-          QuizGPT makes studying smarter{"\n"} so exams feel less scary.
+        <Text className="text-xl text-textSecondary text-center font-nunito-medium mb-8">
+          Turn your study materials into{"\n"}powerful practice quizzes that
+          actually help you {"\n"}remember.
         </Text>
 
         <PrimaryButton
