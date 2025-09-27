@@ -129,17 +129,17 @@ const Home: React.FC = () => {
     questionTypes: string[],
     numberOfQuestions: number
   ) => {
-    // if (!isProUser && quizCount >= latestUser?.quizLimit && !!lastQuizDate) {
-    //   const lastQuizDateObj = new Date(lastQuizDate);
-    //   const currentDate = new Date();
-    //   const diffTime = currentDate.getTime() - lastQuizDateObj.getTime();
-    //   const diffHours = diffTime / (1000 * 60 * 60);
+    if (!isProUser && quizCount >= latestUser?.quizLimit && !!lastQuizDate) {
+      const lastQuizDateObj = new Date(lastQuizDate);
+      const currentDate = new Date();
+      const diffTime = currentDate.getTime() - lastQuizDateObj.getTime();
+      const diffHours = diffTime / (1000 * 60 * 60);
 
-    //   if (diffHours < 24) {
-    //     (navigation as any).navigate("Paywall");
-    //     return;
-    //   }
-    // }
+      if (diffHours < 24) {
+        (navigation as any).navigate("Paywall");
+        return;
+      }
+    }
 
     const payload = {
       prompt: requestText,
