@@ -129,10 +129,28 @@ const AnimatedLoadingModal = ({
     opacity: messageOpacity.value,
   }));
 
+  const resetAnimation = () => {
+    rotation.value = 0;
+    scale.value = 1;
+    opacity.value = 0;
+    messageOpacity.value = 1;
+    containerScale.value = 0.8;
+    iconY.value = 0;
+    iconShadowOpacity.value = 0.3;
+    iconGlowScale.value = 1;
+
+    setCurrentMessageIndex(0);
+  };
+
   const currentMessage = messages[currentMessageIndex] || messages[0];
 
   return (
-    <Modal transparent={true} visible={isVisible} animationType="fade">
+    <Modal
+      transparent={true}
+      visible={isVisible}
+      animationType="fade"
+      onDismiss={resetAnimation}
+    >
       <View className="absolute inset-0 flex-1 justify-center items-center bg-black/40">
         <Animated.View
           style={containerAnimatedStyle}

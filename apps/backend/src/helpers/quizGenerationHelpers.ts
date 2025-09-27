@@ -125,6 +125,8 @@ export class QuestionValidator {
     if (typeof q.correctAnswer === "string") {
       const parsed = parseInt(q.correctAnswer);
       correctAnswer = isNaN(parsed) ? 0 : parsed;
+    } else if (typeof q.correctAnswer === "boolean") {
+      correctAnswer = q.correctAnswer ? 0 : 1;
     }
 
     if (questionType === "true_false") {
@@ -245,6 +247,138 @@ export class QuestionValidator {
       (!q.options.includes("True") || !q.options.includes("False"))
     ) {
       throw new Error(`Question ${index}: Invalid true_false format`);
+    }
+  }
+}
+
+export class ContinueLearningHelper {
+  static extractQuizContext(
+    quiz: any,
+    user: any
+  ): {
+    description: string;
+    difficulty: string;
+    questionTypes: string[];
+    userContext: any;
+  } {
+    const questionTypes = [
+      ...new Set(quiz.questions.map((q: any) => q.questionType)),
+    ] as string[];
+
+    const difficulty = user.difficulty || "medium";
+
+    return {
+      description: quiz.description,
+      difficulty,
+      questionTypes,
+      userContext: user,
+    };
+  }
+
+  static buildContinueLearningPrompt(
+    originalDescription: string,
+    userPrompt: string,
+    existingQuestions: string[],
+    context: {
+      difficulty: string;
+      questionTypes: string[];
+      user: any;
+    }
+  ): string {
+    const { difficulty, questionTypes, user } = context;
+    const { age, grade, gender } = user;
+
+    const distribution = this.calculateQuestionDistribution(5, questionTypes);
+    const distributionText = this.formatQuestionDistribution(distribution);
+
+    return `Continue the exam preparation quiz about "${originalDescription}" based on the user's specific request: "${userPrompt}"
+
+🎯 CONTINUE LEARNING CONTEXT:
+- Original Topic: ${originalDescription}
+- User Request: ${userPrompt}
+- Difficulty Level: ${difficulty.toUpperCase()}
+- Target Audience: ${age}-year-old ${gender} in ${grade} grade
+- Question Types: ${questionTypes.join(", ").toUpperCase()}
+- New Questions Needed: 5
+
+📚 QUESTION DISTRIBUTION FOR NEW QUESTIONS:
+${distributionText}
+
+🎓 CONTINUE LEARNING STRATEGY:
+- Generate questions that build upon the existing knowledge
+- Focus on the specific aspect the user requested
+- Maintain the same difficulty level and academic rigor
+- Create questions that complement the existing ones
+- Ensure questions are completely different from existing ones
+- Use the same exam-focused approach as the original quiz
+
+📝 EXISTING QUESTIONS (DO NOT DUPLICATE):
+${existingQuestions.map((q, index) => `${index + 1}. ${q}`).join("\n")}
+
+🚫 CRITICAL REQUIREMENTS:
+- Generate EXACTLY 5 new questions
+- Use ONLY the question types listed in the distribution above
+- DO NOT repeat any existing questions
+- Maintain the same academic level and difficulty
+- Focus on the user's specific request: "${userPrompt}"
+
+📋 RESPONSE FORMAT:
+Return a JSON object with this EXACT structure:
+{
+  "questions": [
+    {
+      "question": "Question text here?",
+      "questionType": "mcq",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswer": 0
+    }
+  ]
+}
+
+🎯 EXAM SUCCESS MISSION:
+Generate 5 questions that will help this student:
+1. ADDRESS their specific learning request
+2. BUILD upon their existing knowledge
+3. PRACTICE under the same exam conditions
+4. MASTER additional aspects of the topic
+5. ACE their upcoming test!
+
+Make every new question count towards their exam success!`;
+  }
+
+  private static calculateQuestionDistribution(
+    total: number,
+    types: string[]
+  ): Record<string, number> {
+    const base = Math.floor(total / types.length);
+    const remainder = total % types.length;
+
+    const distribution: Record<string, number> = {};
+    types.forEach((type, index) => {
+      distribution[type] = base + (index < remainder ? 1 : 0);
+    });
+
+    return distribution;
+  }
+
+  private static formatQuestionDistribution(
+    distribution: Record<string, number>
+  ): string {
+    return Object.entries(distribution)
+      .map(([type, count]) => `- ${count} ${this.getQuestionTypeLabel(type)}`)
+      .join("\n");
+  }
+
+  private static getQuestionTypeLabel(type: string): string {
+    switch (type) {
+      case "mcq":
+        return "Multiple Choice Questions (4 options each)";
+      case "true_false":
+        return "True/False Questions";
+      case "fill_blank":
+        return "Fill-in-the-blank Questions";
+      default:
+        return `${type} Questions`;
     }
   }
 }

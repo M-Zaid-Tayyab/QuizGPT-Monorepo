@@ -71,10 +71,10 @@ const QuizResults: React.FC<QuizResultsProps> = ({
     } else if (percentage >= 50) {
       return {
         level: "Fair",
-        color: "text-orange-500",
-        bgColor: "bg-orange-500/10",
-        borderColor: "border-orange-500/20",
-        progressColor: "bg-orange-500",
+        color: "text-orange",
+        bgColor: "bg-orange/10",
+        borderColor: "border-orange/20",
+        progressColor: "bg-orange",
         emoji: "📚",
         message: "Not bad! A bit more practice will help!",
       };

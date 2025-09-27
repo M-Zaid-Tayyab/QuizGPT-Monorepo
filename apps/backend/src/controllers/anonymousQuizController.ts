@@ -3,6 +3,7 @@ import { Response } from "express";
 import OpenAI from "openai";
 import { PromptBuilder } from "../helpers/promptBuilder";
 import {
+  ContinueLearningHelper,
   InputProcessor,
   QuestionValidator,
   QuizErrorHandler,
@@ -254,6 +255,7 @@ export const continueLearning = async (
   res: Response
 ): Promise<void> => {
   try {
+    // 1. Get user and validate request
     const userUuid = req.anonymousUser._id;
     const { quizId, userPrompt } = req.body as {
       quizId: string;
@@ -265,6 +267,7 @@ export const continueLearning = async (
       return;
     }
 
+    // 2. Get quiz and validate ownership
     const quiz = await Quiz.findById(quizId);
     if (!quiz) {
       res.status(404).json({ message: "Quiz not found" });
@@ -278,52 +281,32 @@ export const continueLearning = async (
       return;
     }
 
-    const existingQuestions = quiz.questions
-      .map((q, index) => `${index + 1}. ${q.question}`)
-      .join("\n");
-
-    const prompt = `Continue the academic quiz about "${quiz.description}" based on the user's request: "${userPrompt}"
-
-### 🎯 Context:
-This is a continuation of an existing exam preparation quiz. Please generate 5 NEW questions that:
-- Build upon the existing topic and difficulty level for continued practice
-- Are completely different from the existing questions
-- Focus on exam preparation and academic assessment
-- Cover additional important concepts from the same syllabus/topic
-- Test deeper understanding and application of the subject matter
-
-### 📝 Existing Questions (to avoid duplicates):
-${existingQuestions}
-
-### 🎓 Exam Preparation Focus:
-- Generate questions that complement the existing ones for comprehensive coverage
-- Include questions that test different aspects of the same topic
-- Focus on commonly tested concepts that might have been missed
-- Ensure questions are directly relevant to exam patterns and curriculum
-- Use academic terminology and precise language
-
-### 🚫 Important:
-- DO NOT repeat any of the existing questions above
-- Create completely new, unique questions that add value to exam preparation
-- Maintain the same academic rigor and format
-- Keep questions challenging and relevant to actual exams
-
-Format the response as a JSON object with a "questions" array where each question object has:
-- question: the question text (required)
-- options: array of 4 options (required)
-- correctAnswer: index of the correct answer (0-3) (required)
-
-Example format:
-{
-  "questions": [
-    {
-      "question": "What is the primary mechanism behind this process?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": 2
+    // 3. Get user context
+    const user = await AnonymousUser.findById(userUuid);
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
     }
-  ]
-}`;
 
+    // 4. Extract quiz context (difficulty, question types, etc.)
+    const quizContext = ContinueLearningHelper.extractQuizContext(quiz, user);
+
+    // 5. Prepare existing questions for context
+    const existingQuestions = quiz.questions.map((q) => q.question);
+
+    // 6. Build optimized prompt
+    const prompt = ContinueLearningHelper.buildContinueLearningPrompt(
+      quizContext.description,
+      userPrompt,
+      existingQuestions,
+      {
+        difficulty: quizContext.difficulty,
+        questionTypes: quizContext.questionTypes,
+        user: quizContext.userContext,
+      }
+    );
+
+    // 7. Call OpenAI API
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
       model: "gpt-3.5-turbo",
@@ -340,17 +323,22 @@ Example format:
       throw new Error("Invalid response format from OpenAI");
     }
 
-    quiz.questions.push(...response.questions);
+    // 8. Validate and clean new questions
+    const cleanedQuestions = QuestionValidator.validateAndCleanQuestions(
+      response.questions
+    );
+
+    // 9. Add new questions to quiz
+    quiz.questions.push(...cleanedQuestions);
     await quiz.save();
 
     res.status(200).json({
       message: "Quiz continued successfully",
-      newQuestionsCount: response.questions.length,
+      newQuestionsCount: cleanedQuestions.length,
       quiz,
     });
   } catch (error) {
-    console.error("Error continuing quiz:", error);
-    res.status(500).json({ message: "Error continuing quiz" });
+    QuizErrorHandler.handleError(error, res);
   }
 };
 

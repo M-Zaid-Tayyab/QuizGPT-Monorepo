@@ -138,17 +138,14 @@ export const generateCustomQuiz = async (
     }
     const { age, grade, gender } = user;
 
-    // Handle both form data (with file) and JSON data
     let topic, difficulty, questionTypes, numberOfQuestions, description;
 
     if (req.file) {
-      // Handle file upload case
       topic = req.body.topic;
       difficulty = req.body.difficulty;
       questionTypes = JSON.parse(req.body.questionTypes);
       numberOfQuestions = parseInt(req.body.numberOfQuestions, 10);
 
-      // Process the uploaded file
       const fileType = validateFileType(req.file.mimetype);
 
       if (fileType === "invalid") {
@@ -187,7 +184,6 @@ export const generateCustomQuiz = async (
         return;
       }
     } else {
-      // Handle JSON case
       ({ topic, difficulty, questionTypes, numberOfQuestions } = req.body);
       description = topic;
     }
@@ -214,7 +210,6 @@ export const generateCustomQuiz = async (
       return;
     }
 
-    // Create question type distribution
     const questionTypeDistribution = questionTypes.join(", ");
     const mcqCount = Math.ceil(numberOfQuestions * 0.6);
     const trueFalseCount = Math.ceil(numberOfQuestions * 0.2);
