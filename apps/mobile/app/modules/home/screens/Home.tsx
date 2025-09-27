@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 
 import AnimatedLoadingModal from "@/app/components/AnimatedLoadingModal";
@@ -7,6 +7,7 @@ import PrimaryButton from "@/app/components/PrimaryButton";
 import SkeletonPlaceholder from "@/app/components/SkeltonPlaceholder";
 import { client } from "@/app/services";
 import { mmkv } from "@/app/storage/mmkv";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useNavigation } from "@react-navigation/native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -15,6 +16,7 @@ import { customEvent } from "vexo-analytics";
 import { useUserStore } from "../../auth/store/userStore";
 import { StepGuide, StreakCalendar } from "../components";
 import FilePickerModal from "../components/FilePickerModal";
+import QuizPreferencesSheet from "../components/QuizPreferencesSheet";
 import QuizRequestInterface from "../components/QuizRequestInterface";
 
 const Home: React.FC = () => {
@@ -25,14 +27,15 @@ const Home: React.FC = () => {
     logout,
     quizCount,
     setQuizCount,
-    lastQuizDate,
     setLastQuizDate,
     isProUser,
+    lastQuizDate,
   } = useUserStore();
   const [requestText, setRequestText] = useState("");
   const [attachedFile, setAttachedFile] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showFilePicker, setShowFilePicker] = useState(false);
+  const quizPreferencesRef = useRef<BottomSheetModal>(null);
 
   const getUser = async () => {
     const response = await client.get("auth/user");
@@ -86,7 +89,13 @@ const Home: React.FC = () => {
   };
 
   const quizMutation = useMutation({
-    mutationFn: (data: { prompt: string; file?: any }) => {
+    mutationFn: (data: {
+      prompt: string;
+      file?: any;
+      difficulty: string;
+      questionTypes: string[];
+      numberOfQuestions: number;
+    }) => {
       if (data.file) {
         const formData = new FormData();
         formData.append("file", {
@@ -94,38 +103,55 @@ const Home: React.FC = () => {
           type: data.file.type,
           name: data.file.name,
         } as any);
-        formData.append("prompt", data.prompt);
+        formData.append("topic", data.prompt);
+        formData.append("difficulty", data.difficulty);
+        formData.append("questionTypes", JSON.stringify(data.questionTypes));
+        formData.append("numberOfQuestions", data.numberOfQuestions.toString());
+
         return client.post("quiz/generate", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
       } else {
-        return client.get(`quiz/generate?prompt=${data.prompt}`);
+        return client.post("quiz/generate", {
+          topic: data.prompt,
+          difficulty: data.difficulty,
+          questionTypes: data.questionTypes,
+          numberOfQuestions: data.numberOfQuestions,
+        });
       }
     },
   });
 
-  const onGenerateQuiz = () => {
-    if (!isProUser && quizCount >= latestUser?.quizLimit && !!lastQuizDate) {
-      const lastQuizDateObj = new Date(lastQuizDate);
-      const currentDate = new Date();
-      const diffTime = currentDate.getTime() - lastQuizDateObj.getTime();
-      const diffHours = diffTime / (1000 * 60 * 60);
+  const onGenerateQuiz = (
+    difficulty: string,
+    questionTypes: string[],
+    numberOfQuestions: number
+  ) => {
+    // if (!isProUser && quizCount >= latestUser?.quizLimit && !!lastQuizDate) {
+    //   const lastQuizDateObj = new Date(lastQuizDate);
+    //   const currentDate = new Date();
+    //   const diffTime = currentDate.getTime() - lastQuizDateObj.getTime();
+    //   const diffHours = diffTime / (1000 * 60 * 60);
 
-      if (diffHours < 24) {
-        (navigation as any).navigate("Paywall");
-        return;
-      }
-    }
+    //   if (diffHours < 24) {
+    //     (navigation as any).navigate("Paywall");
+    //     return;
+    //   }
+    // }
 
     const payload = {
       prompt: requestText,
       file: attachedFile,
+      difficulty,
+      questionTypes,
+      numberOfQuestions,
     };
 
     quizMutation.mutate(payload, {
       onSuccess: (data) => {
+        console.log("Generated Quiz: ", data.data);
         setLastQuizDate(new Date().toISOString());
         setQuizCount(quizCount + 1);
         (navigation as any).navigate("Quiz", { quizData: data.data });
@@ -138,6 +164,10 @@ const Home: React.FC = () => {
         });
       },
     });
+  };
+
+  const handleQuizPreferencesClose = () => {
+    quizPreferencesRef.current?.close();
   };
 
   const handleFileSelect = (file: any) => {
@@ -199,7 +229,7 @@ const Home: React.FC = () => {
       </KeyboardAwareScrollView>
       <PrimaryButton
         title="✨ Generate Quiz"
-        onPress={onGenerateQuiz}
+        onPress={() => quizPreferencesRef.current?.present()}
         disabled={quizMutation.isPending || requestText.trim().length === 0}
         className="my-4 mx-4"
       />
@@ -213,6 +243,13 @@ const Home: React.FC = () => {
         isVisible={showFilePicker}
         onClose={() => setShowFilePicker(false)}
         onFileSelect={handleFileSelect}
+      />
+      <QuizPreferencesSheet
+        sheetRef={quizPreferencesRef}
+        onGenerateQuiz={onGenerateQuiz}
+        onClose={handleQuizPreferencesClose}
+        topic={requestText}
+        attachedFile={attachedFile}
       />
     </View>
   );

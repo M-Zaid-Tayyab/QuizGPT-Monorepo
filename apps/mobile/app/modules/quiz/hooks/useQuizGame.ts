@@ -13,9 +13,11 @@ import useQuiz from "../../home/hooks/useQuiz";
 
 export interface QuizQuestion {
   question: string;
+  questionType: "mcq" | "true_false" | "fill_blank";
   options: string[];
   correctAnswer: string | number;
   selectedAnswer?: number;
+  userAnswer?: string; // For fill-in-the-blank questions
 }
 
 export interface QuizData {

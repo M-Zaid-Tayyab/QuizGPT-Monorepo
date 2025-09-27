@@ -1,11 +1,13 @@
 import dotenv from "dotenv";
 import { Response } from "express";
 import OpenAI from "openai";
+import { PromptBuilder } from "../helpers/promptBuilder";
 import {
-  extractTextFromImage,
-  extractTextFromPDF,
-  validateFileType,
-} from "../helpers/textExtractionHelper";
+  InputProcessor,
+  QuestionValidator,
+  QuizErrorHandler,
+  QuizOptions,
+} from "../helpers/quizGenerationHelpers";
 import { AnonymousAuthRequest } from "../middleware/anonymousAuthMiddleware";
 import AnonymousUser from "../models/anonymousUserModel";
 import Quiz from "../models/quizModel";
@@ -31,110 +33,62 @@ export const generateAnonymousQuiz = async (
       res.status(404).json({ message: "User not found" });
       return;
     }
-    const { age, grade, difficulty, gender } = user;
 
-    let description: string;
+    const requestData = await InputProcessor.extractRequestData(req);
 
-    if (req.file) {
-      const fileType = validateFileType(req.file.mimetype);
+    const description = await InputProcessor.processInput(
+      requestData.topic,
+      requestData.file
+    );
 
-      if (fileType === "invalid") {
-        res.status(400).json({
-          message: "Invalid file type. Only PDF and image files are allowed.",
-        });
-        return;
-      }
-
-      try {
-        let fileText: string;
-        if (fileType === "pdf") {
-          fileText = await extractTextFromPDF(req.file.buffer);
-        } else {
-          fileText = await extractTextFromImage(req.file.buffer);
-        }
-
-        if (!fileText || fileText.trim().length === 0) {
-          res.status(400).json({
-            message:
-              "No text could be extracted from the uploaded file. Please try a different file or use a text prompt.",
-          });
-          return;
-        }
-
-        if (fileText.length > 2000) {
-          fileText = fileText.substring(0, 2000) + "...";
-        }
-
-        const userPrompt = req.body.prompt;
-
-        if (userPrompt && userPrompt.trim()) {
-          description = `Topic/Instruction: ${userPrompt}\n\nSyllabus/Study Material:\n${fileText}`;
-        } else {
-          description = `Syllabus/Study Material:\n${fileText}`;
-        }
-      } catch (error) {
-        console.error("Error extracting text from file:", error);
-        res.status(500).json({
-          message: "Error processing the uploaded file. Please try again.",
-        });
-        return;
-      }
-    } else {
-      description = req.query.prompt as string;
-
-      if (!description) {
-        res.status(400).json({
-          message: "Either a prompt or a file (PDF/image) is required",
-        });
-        return;
-      }
+    if (!description) {
+      res.status(400).json({
+        message: "Either a prompt or a file (PDF/image) is required",
+      });
+      return;
     }
 
-    const prompt = `Create a comprehensive academic quiz designed specifically for ${age}-year-old students in ${grade} grade to help them excel in their exams. The quiz should have a "${difficulty}" difficulty level.
-
-### 📖 Study Context:
-${description}
-
-### 🎯 Academic Goals:
-- Focus on key concepts, definitions, and facts that commonly appear in exams
-- Include questions that test understanding, application, and critical thinking
-- Cover important topics, formulas, processes, and relationships from the syllabus
-- Use clear, precise language appropriate for academic assessment
-- Include both factual recall and problem-solving questions
-- Ensure questions are directly relevant to curriculum and exam patterns
-- If a specific topic/instruction is provided, prioritize that focus area
-- If syllabus material is provided, ensure questions align with the official curriculum
-
-### 📚 Question Types to Include:
-- Definition and concept questions
-- Process and procedure questions  
-- Problem-solving and application questions
-- Comparison and analysis questions
-- Formula and calculation questions (if applicable)
-
-### 🎓 Exam Preparation Focus:
-- Questions should mirror actual exam question styles
-- Include common misconceptions as incorrect options
-- Test both surface knowledge and deep understanding
-- Cover the most important and frequently tested topics
-- Use academic terminology and precise language
-
-Format the response as a JSON object with a title that clearly indicates the topic (avoid generic words like "Quiz" or "Test") and a "questions" array with 10 questions where each question object has:
-- question: the question text (required)
-- options: array of 4 options (required) 
-- correctAnswer: index of the correct answer (0-3) (required)
-
-Example format:
-{
-  "title": "Photosynthesis Process",
-  "questions": [
-    {
-      "question": "What is the primary function of chlorophyll in photosynthesis?",
-      "options": ["Store glucose", "Absorb light energy", "Release oxygen", "Break down water"],
-      "correctAnswer": 1
+    if (
+      !requestData.topic ||
+      !requestData.difficulty ||
+      !requestData.questionTypes ||
+      !requestData.numberOfQuestions
+    ) {
+      res.status(400).json({
+        message:
+          "Topic, difficulty, questionTypes, and numberOfQuestions are required",
+      });
+      return;
     }
-  ]
-}`;
+
+    if (
+      !Array.isArray(requestData.questionTypes) ||
+      requestData.questionTypes.length === 0
+    ) {
+      res.status(400).json({
+        message: "At least one question type must be selected",
+      });
+      return;
+    }
+
+    if (
+      requestData.numberOfQuestions < 1 ||
+      requestData.numberOfQuestions > 50
+    ) {
+      res.status(400).json({
+        message: "Number of questions must be between 1 and 50",
+      });
+      return;
+    }
+
+    const quizOptions: QuizOptions = {
+      difficulty: requestData.difficulty,
+      questionTypes: requestData.questionTypes,
+      numberOfQuestions: requestData.numberOfQuestions,
+      user: user,
+    };
+
+    const prompt = PromptBuilder.buildOptimizedPrompt(description, quizOptions);
 
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
@@ -152,18 +106,21 @@ Example format:
       throw new Error("Invalid response format from OpenAI");
     }
 
+    const cleanedQuestions = QuestionValidator.validateAndCleanQuestions(
+      response.questions
+    );
+
     const quiz = await Quiz.create({
       description: description,
       title: response.title,
-      questions: response.questions,
+      questions: cleanedQuestions,
       createdBy: userUuid,
       userType: "anonymous",
     });
 
     res.status(201).json(quiz);
   } catch (error) {
-    console.error("Error generating anonymous quiz:", error);
-    res.status(500).json({ message: "Error generating quiz" });
+    QuizErrorHandler.handleError(error, res);
   }
 };
 

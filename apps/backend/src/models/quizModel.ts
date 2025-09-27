@@ -1,44 +1,54 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const questionSchema = new mongoose.Schema({
-    question: {
-        type: String,
-        required: true
+  question: {
+    type: String,
+    required: true,
+  },
+  questionType: {
+    type: String,
+    enum: ["mcq", "true_false", "fill_blank"],
+    default: "mcq",
+  },
+  options: [
+    {
+      type: String,
+      required: true,
     },
-    options: [{
-        type: String,
-        required: true
-    }],
-    correctAnswer: {
-        type: Number,
-        required: true
-    },
-    selectedAnswer: {
-        type: Number,
-        min: 0,
-        max: 3
-    }
+  ],
+  correctAnswer: {
+    type: Number,
+    required: true,
+  },
+  selectedAnswer: {
+    type: Number,
+    min: 0,
+    max: 3,
+  },
 });
 
-const quizSchema = new mongoose.Schema({
+const quizSchema = new mongoose.Schema(
+  {
     description: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     title: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     questions: [questionSchema],
     createdBy: {
-        type: mongoose.Schema.Types.Mixed,
-        required: true
+      type: mongoose.Schema.Types.Mixed,
+      required: true,
     },
     userType: {
-        type: String,
-        enum: ['user', 'anonymous'],
-        required: true
-    }
-}, { timestamps: true });
+      type: String,
+      enum: ["user", "anonymous"],
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-export default mongoose.model('Quiz', quizSchema); 
+export default mongoose.model("Quiz", quizSchema);

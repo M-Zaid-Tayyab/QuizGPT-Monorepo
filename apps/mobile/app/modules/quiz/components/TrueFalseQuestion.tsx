@@ -1,12 +1,9 @@
-import clsx from "clsx";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { QuizQuestion as QuizQuestionType } from "../hooks/useQuizGame";
-import FillBlankQuestion from "./FillBlankQuestion";
 import QuizOption from "./QuizOption";
-import TrueFalseQuestion from "./TrueFalseQuestion";
 
-interface QuizQuestionProps {
+interface TrueFalseQuestionProps {
   question: QuizQuestionType;
   questionIndex: number;
   currentQuestionIndex: number;
@@ -20,7 +17,7 @@ interface QuizQuestionProps {
   totalQuestions: number;
 }
 
-const QuizQuestion: React.FC<QuizQuestionProps> = ({
+const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
   question,
   questionIndex,
   currentQuestionIndex,
@@ -33,42 +30,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   onNextQuestion,
   totalQuestions,
 }) => {
-  if (question.questionType === "true_false") {
-    return (
-      <TrueFalseQuestion
-        question={question}
-        questionIndex={questionIndex}
-        currentQuestionIndex={currentQuestionIndex}
-        selectedAnswer={selectedAnswer}
-        isAnswerSubmitted={isAnswerSubmitted}
-        isHistory={isHistory}
-        skippedQuestions={skippedQuestions}
-        getOptionAnimatedStyle={getOptionAnimatedStyle}
-        onAnswerSelect={onAnswerSelect}
-        onNextQuestion={onNextQuestion}
-        totalQuestions={totalQuestions}
-      />
-    );
-  }
-
-  if (question.questionType === "fill_blank") {
-    return (
-      <FillBlankQuestion
-        question={question}
-        questionIndex={questionIndex}
-        currentQuestionIndex={currentQuestionIndex}
-        selectedAnswer={selectedAnswer}
-        isAnswerSubmitted={isAnswerSubmitted}
-        isHistory={isHistory}
-        skippedQuestions={skippedQuestions}
-        getOptionAnimatedStyle={getOptionAnimatedStyle}
-        onAnswerSelect={onAnswerSelect}
-        onNextQuestion={onNextQuestion}
-        totalQuestions={totalQuestions}
-      />
-    );
-  }
-
   const isCurrentQuestion = questionIndex === currentQuestionIndex;
   const correctAnswerIndex =
     typeof question.correctAnswer === "number"
@@ -119,22 +80,22 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           );
         })}
       </View>
-      <TouchableOpacity
-        className={clsx(
-          "bg-primary p-4 rounded-lg",
-          !showNextButton && "opacity-0"
-        )}
-        disabled={!showNextButton}
-        onPress={onNextQuestion}
-      >
-        <Text className="text-white text-center text-lg font-nunito-bold">
-          {currentQuestionIndex < totalQuestions - 1
-            ? "Next Question"
-            : "See Results"}
-        </Text>
-      </TouchableOpacity>
+
+      {showNextButton && (
+        <TouchableOpacity
+          className="bg-primary p-4 rounded-lg mb-4"
+          onPress={onNextQuestion}
+          activeOpacity={0.8}
+        >
+          <Text className="text-white text-center font-nunito-bold text-lg">
+            {questionIndex === totalQuestions - 1
+              ? "Finish Quiz"
+              : "Next Question"}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
 
-export default QuizQuestion;
+export default TrueFalseQuestion;
