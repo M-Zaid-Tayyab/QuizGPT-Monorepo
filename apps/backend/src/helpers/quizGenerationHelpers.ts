@@ -137,21 +137,24 @@ export class QuestionValidator {
       };
     } else if (questionType === "fill_blank") {
       let questionText = q.question || "Fill in the blank question";
-      let correctAnswerText = q.options && q.options[0] ? q.options[0] : "";
+      let correctAnswerText = "";
 
-      if (questionText.includes("____%") || questionText.includes("____.")) {
-        const answerMatch = questionText.match(/____([^.]*)/);
-        if (answerMatch && answerMatch[1]) {
-          correctAnswerText = answerMatch[1].trim();
-          questionText = questionText.replace(/____[^.]*/, "____");
+      if (
+        !questionText.includes("____") &&
+        !questionText.includes("___") &&
+        !questionText.includes("__")
+      ) {
+        questionText = questionText.replace(/[.!?]$/, " ____.");
+        if (!questionText.includes("____")) {
+          questionText += " ____";
         }
       }
 
-      if (
-        !correctAnswerText &&
-        typeof q.correctAnswer === "number" &&
-        q.correctAnswer > 0
-      ) {
+      if (q.options && Array.isArray(q.options) && q.options.length > 0) {
+        correctAnswerText = q.options[0];
+      } else if (typeof q.correctAnswer === "string") {
+        correctAnswerText = q.correctAnswer;
+      } else if (typeof q.correctAnswer === "number") {
         correctAnswerText = q.correctAnswer.toString();
       }
 
@@ -217,11 +220,24 @@ export class QuestionValidator {
       );
     }
 
-    if (
-      q.questionType === "fill_blank" &&
-      (!q.question.includes("____") || q.options.length !== 1)
-    ) {
-      throw new Error(`Question ${index}: Invalid fill_blank format`);
+    if (q.questionType === "fill_blank") {
+      const hasBlank =
+        q.question.includes("____") ||
+        q.question.includes("___") ||
+        q.question.includes("__") ||
+        q.question.includes("_");
+
+      if (!hasBlank) {
+        throw new Error(
+          `Question ${index}: Fill-in-the-blank question must contain a blank (____)`
+        );
+      }
+
+      if (q.options.length !== 1) {
+        throw new Error(
+          `Question ${index}: Fill-in-the-blank question must have exactly 1 option (the correct answer)`
+        );
+      }
     }
 
     if (

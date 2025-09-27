@@ -151,7 +151,7 @@ const Home: React.FC = () => {
 
     quizMutation.mutate(payload, {
       onSuccess: (data) => {
-        console.log("Generated Quiz: ", data.data);
+        console.log("Generated Quiz: ", JSON.stringify(data.data));
         setLastQuizDate(new Date().toISOString());
         setQuizCount(quizCount + 1);
         (navigation as any).navigate("Quiz", { quizData: data.data });
