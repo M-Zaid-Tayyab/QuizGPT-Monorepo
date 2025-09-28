@@ -78,7 +78,7 @@ const FillBlankQuestion: React.FC<FillBlankQuestionProps> = ({
 
       <View className="mb-8">
         <TextInput
-          className={`p-4 rounded-lg border text-base font-nunito ${
+          className={`p-4 rounded-lg border text-base font-nunito text-textPrimary ${
             isHistory || isAnswerSubmitted
               ? isCorrect
                 ? "bg-success/10 border-success text-success"
@@ -103,24 +103,11 @@ const FillBlankQuestion: React.FC<FillBlankQuestionProps> = ({
           autoCorrect={false}
         />
 
-        {(isHistory || isAnswerSubmitted) && (
+        {(isHistory || isAnswerSubmitted) && !isCorrect && (
           <View className="mt-4 space-y-3">
-            {(question as any).userTextAnswer && (
-              <View className="p-4 rounded-lg bg-blue-50">
-                <Text className="text-sm font-nunito-semibold text-blue-700 mb-2">
-                  Your Answer:
-                </Text>
-                <Text className="text-base font-nunito text-blue-800">
-                  {(question as any).userTextAnswer}
-                </Text>
-              </View>
-            )}
             <View className="p-4 rounded-lg bg-gray-50">
               <Text className="text-sm font-nunito-semibold text-gray-700 mb-2">
-                Correct Answer:
-              </Text>
-              <Text className="text-base font-nunito text-gray-800">
-                {correctAnswer}
+                Correct Answer: {correctAnswer}
               </Text>
             </View>
           </View>

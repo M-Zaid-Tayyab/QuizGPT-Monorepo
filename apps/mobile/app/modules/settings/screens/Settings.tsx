@@ -199,7 +199,7 @@ const Settings: React.FC = () => {
                 <Text className="text-gray-900 font-nunito-bold text-base">
                   Build Number
                 </Text>
-                <Text className="text-gray-500 text-sm mt-1">26</Text>
+                <Text className="text-gray-500 text-sm mt-1">29</Text>
               </View>
             </View>
           </View>

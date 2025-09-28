@@ -81,7 +81,7 @@ function QuizPreferencesSheet({
   attachedFile,
 }: Props) {
   const [difficulty, setDifficulty] = useState<string>("medium");
-  const [questionTypes, setQuestionTypes] = useState<string[]>([]);
+  const [questionTypes, setQuestionTypes] = useState<string[]>(["mcq"]);
   const [numberOfQuestions, setNumberOfQuestions] = useState(10);
 
   const handleQuestionTypeToggle = useCallback((type: string) => {
@@ -124,14 +124,14 @@ function QuizPreferencesSheet({
           </View>
         </View>
 
-        <View className="mt-6">
+        <View className="mt-4">
           <View className="p-3 rounded-xl bg-gray-50/50 border border-gray-100">
             <View className="flex-row items-start">
               <View className="w-12 h-12 rounded-2xl bg-white items-center justify-center mr-4 shadow-sm">
                 <Text className="text-2xl">📚</Text>
               </View>
               <View className="flex-1">
-                <Text className="text-sm font-sfPro-medium text-gray-500 mb-2">
+                <Text className="text-sm font-sfPro-medium text-gray-500 ">
                   Quiz Topic
                 </Text>
                 <Text className="text-lg font-sfPro-semibold text-black">
@@ -139,7 +139,7 @@ function QuizPreferencesSheet({
                 </Text>
                 {attachedFile && (
                   <View className="flex-row items-center bg-white/60 px-3 py-2 rounded-xl">
-                    <Ionicons name="attach" size={14} color="#6B7280" />
+                    <Ionicons name="attach" size={18} color="#6B7280" />
                     <Text className="text-sm font-sfPro text-gray-600 ml-2">
                       {attachedFile.name}
                     </Text>
@@ -150,7 +150,7 @@ function QuizPreferencesSheet({
           </View>
         </View>
 
-        <View className="mt-6">
+        <View className="mt-4">
           <Text className="text-lg font-sfPro-semibold text-black mb-5">
             Difficulty Level
           </Text>
@@ -162,7 +162,7 @@ function QuizPreferencesSheet({
                   key={level.value}
                   onPress={() => setDifficulty(level.value)}
                   className={clsx(
-                    "w-24 h-20 rounded-xl justify-center items-center mr-3",
+                    "w-20 h-16 rounded-xl justify-center items-center mr-3",
                     isSelected
                       ? "bg-primary"
                       : "bg-white border border-borderColor"
@@ -185,7 +185,7 @@ function QuizPreferencesSheet({
           </View>
         </View>
 
-        <View className="mt-6">
+        <View className="mt-4">
           <Text className="text-lg font-sfPro-semibold text-black mb-2">
             Question Types
           </Text>
@@ -200,7 +200,7 @@ function QuizPreferencesSheet({
                   key={type.value}
                   onPress={() => handleQuestionTypeToggle(type.value)}
                   className={clsx(
-                    "px-4 py-3 rounded-xl border",
+                    "px-3 py-2 rounded-lg border",
                     isSelected
                       ? "border-primary bg-primary/5"
                       : "border-borderColor bg-white"
@@ -235,7 +235,7 @@ function QuizPreferencesSheet({
           </View>
         </View>
 
-        <View className="mt-6">
+        <View className="mt-4">
           <Text className="text-lg font-sfPro-semibold text-black">
             Number of Questions
           </Text>
@@ -243,7 +243,7 @@ function QuizPreferencesSheet({
             Choose between 1-50 questions
           </Text>
 
-          <View className="flex-row items-start justify-center mt-6">
+          <View className="flex-row items-start justify-center mt-8">
             <TouchableOpacity
               onPress={() =>
                 setNumberOfQuestions(Math.max(1, numberOfQuestions - 1))
