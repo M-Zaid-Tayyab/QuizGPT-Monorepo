@@ -25,6 +25,10 @@ const questionSchema = new mongoose.Schema({
     min: 0,
     max: 3,
   },
+  userTextAnswer: {
+    type: String,
+    default: "",
+  },
 });
 
 const quizSchema = new mongoose.Schema(

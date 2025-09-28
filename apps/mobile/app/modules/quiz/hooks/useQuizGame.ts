@@ -41,6 +41,9 @@ export const useQuizGame = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const selectedAnswers = useRef<any[]>([]);
+  const [userTextAnswers, setUserTextAnswers] = useState<
+    Record<number, string>
+  >({});
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [showResults, setShowResults] = useState(false);
@@ -118,6 +121,16 @@ export const useQuizGame = () => {
     [moreQuestionsMutation, quizData?._id, resetOptionAnimations]
   );
 
+  const handleTextAnswer = useCallback(
+    (questionIndex: number, text: string) => {
+      setUserTextAnswers((prev) => ({
+        ...prev,
+        [questionIndex]: text,
+      }));
+    },
+    []
+  );
+
   const handleAnswerSelect = useCallback(
     async (index: number) => {
       if (isAnswerSubmitted || isHistory || isAnimating || !currentQuestion)
@@ -129,15 +142,34 @@ export const useQuizGame = () => {
       selectedAnswers.current.push({
         questionIndex: currentQuestionIndex,
         selectedAnswer: index,
+        userTextAnswer: userTextAnswers[currentQuestionIndex],
       });
 
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      const isCorrect =
-        index ===
-        (typeof currentQuestion.correctAnswer === "number"
-          ? currentQuestion.correctAnswer
-          : parseInt(currentQuestion.correctAnswer, 10));
+      // Check if answer is correct based on question type
+      let isCorrect = false;
+      if (currentQuestion.questionType === "fill_blank") {
+        // For fill-in-the-blank, compare the actual text content
+        const normalizeText = (text: string) =>
+          text
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s]/g, "")
+            .replace(/\s+/g, " ");
+        const userAnswer = normalizeText(
+          userTextAnswers[currentQuestionIndex] || ""
+        );
+        const correctAnswer = normalizeText(currentQuestion.options[0] || "");
+        isCorrect = userAnswer === correctAnswer;
+      } else {
+        // For MCQ and True/False, use the existing index comparison
+        isCorrect =
+          index ===
+          (typeof currentQuestion.correctAnswer === "number"
+            ? currentQuestion.correctAnswer
+            : parseInt(currentQuestion.correctAnswer, 10));
+      }
       if (isCorrect) {
         setScore(score + 1);
         try {
@@ -179,9 +211,13 @@ export const useQuizGame = () => {
       isHistory,
       isAnimating,
       currentQuestion?.correctAnswer,
+      currentQuestion?.questionType,
+      currentQuestion?.options,
       score,
       correctAudioPlayer,
       wrongAudioPlayer,
+      userTextAnswers,
+      currentQuestionIndex,
     ]
   );
 
@@ -200,9 +236,13 @@ export const useQuizGame = () => {
       resetOptionAnimations();
     } else {
       if (!isHistory) {
+        const questionsWithTextAnswers = selectedAnswers.current.map((q) => ({
+          ...q,
+          userTextAnswer: userTextAnswers[q.questionIndex],
+        }));
         quizResultMutation.mutate({
           quizId: quizData?._id,
-          questions: selectedAnswers.current,
+          questions: questionsWithTextAnswers,
         });
       }
       setShowResults(true);
@@ -215,6 +255,7 @@ export const useQuizGame = () => {
     quizData,
     resetOptionAnimations,
     quizResultMutation,
+    userTextAnswers,
   ]);
 
   const handleGoHome = useCallback(() => {
@@ -237,9 +278,13 @@ export const useQuizGame = () => {
         resetOptionAnimations();
       } else {
         if (!isHistory) {
+          const questionsWithTextAnswers = selectedAnswers.current.map((q) => ({
+            ...q,
+            userTextAnswer: userTextAnswers[q.questionIndex],
+          }));
           quizResultMutation.mutate({
             quizId: quizData?._id,
-            questions: selectedAnswers.current,
+            questions: questionsWithTextAnswers,
           });
         }
         setShowResults(true);
@@ -251,6 +296,7 @@ export const useQuizGame = () => {
       resetOptionAnimations,
       quizResultMutation,
       isHistory,
+      userTextAnswers,
     ]
   );
 
@@ -258,12 +304,29 @@ export const useQuizGame = () => {
     ? quizData?.questions?.reduce((acc: number, q: any, index: number) => {
         if (skippedQuestions.has(index)) return acc;
 
-        return typeof q.selectedAnswer !== "undefined" &&
-          (typeof q.correctAnswer === "number"
-            ? q.correctAnswer
-            : parseInt(q.correctAnswer, 10)) === q.selectedAnswer
-          ? acc + 1
-          : acc;
+        // Check if answer is correct based on question type
+        let isCorrect = false;
+        if (q.questionType === "fill_blank") {
+          // For fill-in-the-blank, compare the actual text content
+          const normalizeText = (text: string) =>
+            text
+              .toLowerCase()
+              .trim()
+              .replace(/[^\w\s]/g, "")
+              .replace(/\s+/g, " ");
+          const userAnswer = normalizeText(q.userTextAnswer || "");
+          const correctAnswer = normalizeText(q.options[0] || "");
+          isCorrect = userAnswer === correctAnswer;
+        } else {
+          // For MCQ and True/False, use the existing index comparison
+          isCorrect =
+            typeof q.selectedAnswer !== "undefined" &&
+            (typeof q.correctAnswer === "number"
+              ? q.correctAnswer
+              : parseInt(q.correctAnswer, 10)) === q.selectedAnswer;
+        }
+
+        return isCorrect ? acc + 1 : acc;
       }, 0) || 0
     : score;
 
@@ -342,6 +405,7 @@ export const useQuizGame = () => {
     historyScore,
 
     handleAnswerSelect,
+    handleTextAnswer,
     handleNextQuestion,
     handleGoHome,
     handleReport,

@@ -14,7 +14,7 @@ interface FillBlankQuestionProps {
   onAnswerSelect: (index: number) => void;
   onNextQuestion: () => void;
   totalQuestions: number;
-  onTextAnswer?: (answer: string) => void;
+  onTextAnswer?: (questionIndex: number, text: string) => void;
 }
 
 const FillBlankQuestion: React.FC<FillBlankQuestionProps> = ({
@@ -31,7 +31,9 @@ const FillBlankQuestion: React.FC<FillBlankQuestionProps> = ({
   totalQuestions,
   onTextAnswer,
 }) => {
-  const [userInput, setUserInput] = useState(question.userAnswer || "");
+  const [userInput, setUserInput] = useState(
+    (question as any).userTextAnswer || question.userAnswer || ""
+  );
   const isCurrentQuestion = questionIndex === currentQuestionIndex;
   const correctAnswer = question.options[0];
 
@@ -53,7 +55,7 @@ const FillBlankQuestion: React.FC<FillBlankQuestionProps> = ({
   const handleTextChange = (text: string) => {
     setUserInput(text);
     if (onTextAnswer) {
-      onTextAnswer(text);
+      onTextAnswer(questionIndex, text);
     }
   };
 
@@ -102,13 +104,25 @@ const FillBlankQuestion: React.FC<FillBlankQuestionProps> = ({
         />
 
         {(isHistory || isAnswerSubmitted) && (
-          <View className="mt-4 p-4 rounded-lg bg-gray-50">
-            <Text className="text-sm font-nunito-semibold text-gray-700 mb-2">
-              Correct Answer:
-            </Text>
-            <Text className="text-base font-nunito text-gray-800">
-              {correctAnswer}
-            </Text>
+          <View className="mt-4 space-y-3">
+            {(question as any).userTextAnswer && (
+              <View className="p-4 rounded-lg bg-blue-50">
+                <Text className="text-sm font-nunito-semibold text-blue-700 mb-2">
+                  Your Answer:
+                </Text>
+                <Text className="text-base font-nunito text-blue-800">
+                  {(question as any).userTextAnswer}
+                </Text>
+              </View>
+            )}
+            <View className="p-4 rounded-lg bg-gray-50">
+              <Text className="text-sm font-nunito-semibold text-gray-700 mb-2">
+                Correct Answer:
+              </Text>
+              <Text className="text-base font-nunito text-gray-800">
+                {correctAnswer}
+              </Text>
+            </View>
           </View>
         )}
       </View>

@@ -21,6 +21,7 @@ const openai = new OpenAI({
 interface QuestionAnswer {
   questionIndex: number;
   selectedAnswer: number;
+  userTextAnswer?: string;
 }
 
 export const generateAnonymousQuiz = async (
@@ -150,7 +151,29 @@ export const submitAnonymousQuizResult = async (
     questions.forEach((q) => {
       const question = quiz.questions[q.questionIndex];
       question.selectedAnswer = q.selectedAnswer;
-      if (q.selectedAnswer === question.correctAnswer) {
+      if (q.userTextAnswer !== undefined) {
+        question.userTextAnswer = q.userTextAnswer;
+      }
+
+      // Check if answer is correct based on question type
+      let isCorrect = false;
+      if (question.questionType === "fill_blank") {
+        // For fill-in-the-blank, compare the actual text content
+        const normalizeText = (text: string) =>
+          text
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s]/g, "")
+            .replace(/\s+/g, " ");
+        const userAnswer = normalizeText(q.userTextAnswer || "");
+        const correctAnswer = normalizeText(question.options[0] || "");
+        isCorrect = userAnswer === correctAnswer;
+      } else {
+        // For MCQ and True/False, use the existing index comparison
+        isCorrect = q.selectedAnswer === question.correctAnswer;
+      }
+
+      if (isCorrect) {
         correctAnswers++;
       }
     });

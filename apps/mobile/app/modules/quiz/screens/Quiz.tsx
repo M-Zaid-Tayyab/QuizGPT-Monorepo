@@ -38,6 +38,7 @@ const Quiz: React.FC = () => {
     showSkipMessage,
     historyScore,
     handleAnswerSelect,
+    handleTextAnswer,
     handleNextQuestion,
     handleGoHome,
     handleReport,
@@ -160,6 +161,7 @@ const Quiz: React.FC = () => {
                 skippedQuestions={skippedQuestions}
                 getOptionAnimatedStyle={getOptionAnimatedStyle}
                 onAnswerSelect={handleAnswerSelect}
+                onTextAnswer={handleTextAnswer}
                 onNextQuestion={handleNextQuestion}
                 totalQuestions={quizData.questions.length}
               />

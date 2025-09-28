@@ -16,6 +16,7 @@ interface QuizQuestionProps {
   skippedQuestions: Set<number>;
   getOptionAnimatedStyle: (index: number) => any;
   onAnswerSelect: (index: number) => void;
+  onTextAnswer?: (questionIndex: number, text: string) => void;
   onNextQuestion: () => void;
   totalQuestions: number;
 }
@@ -30,6 +31,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   skippedQuestions,
   getOptionAnimatedStyle,
   onAnswerSelect,
+  onTextAnswer,
   onNextQuestion,
   totalQuestions,
 }) => {
@@ -63,6 +65,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
         skippedQuestions={skippedQuestions}
         getOptionAnimatedStyle={getOptionAnimatedStyle}
         onAnswerSelect={onAnswerSelect}
+        onTextAnswer={onTextAnswer}
         onNextQuestion={onNextQuestion}
         totalQuestions={totalQuestions}
       />
