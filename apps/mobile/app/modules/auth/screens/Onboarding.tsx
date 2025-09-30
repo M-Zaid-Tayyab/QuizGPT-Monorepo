@@ -1,5 +1,4 @@
 import AnimatedLoadingModal from "@/app/components/AnimatedLoadingModal";
-import Header from "@/app/components/Header";
 import React from "react";
 import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -33,7 +32,7 @@ const Onboarding: React.FC = () => {
     <KeyboardAwareScrollView
       className="flex-1 bg-background"
       keyboardShouldPersistTaps="handled"
-      contentContainerClassName="flex-grow"
+      contentContainerClassName="flex-grow py-safe"
       bounces={false}
     >
       {showWelcome ? (
@@ -44,14 +43,6 @@ const Onboarding: React.FC = () => {
         />
       ) : (
         <>
-          <Header
-            showBackButton={false}
-            title=""
-            leftComponent={<View className="w-10" />}
-            transparent={true}
-            elevation={false}
-          />
-
           <ProgressBar
             currentStep={currentQuestionIndex}
             totalSteps={questions.length}
