@@ -1,10 +1,10 @@
 import axios from "axios";
 import { useUserStore } from "../modules/auth/store/userStore";
 
-const isDev = true;
-const isLocal = false;
+const isDev = false;
+const isLocal = true;
 const ROOT_URL = isLocal
-  ? "https://e6a06871624e.ngrok-free.app"
+  ? "https://6befd437d6d0.ngrok-free.app"
   : isDev
   ? "https://quizgpt-backend-development.up.railway.app"
   : "https://quizgpt-backend-production.up.railway.app";

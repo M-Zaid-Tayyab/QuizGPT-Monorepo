@@ -323,6 +323,8 @@ ${existingQuestions.map((q, index) => `${index + 1}. ${q}`).join("\n")}
 - Focus on the user's specific request: "${userPrompt}"
 
 📋 RESPONSE FORMAT:
+Please respond with a valid JSON object containing the quiz questions.
+
 Return a JSON object with this EXACT structure:
 {
   "questions": [

@@ -30,6 +30,27 @@ const anonymousUserSchema = new mongoose.Schema(
         type: Number,
         default: 0,
       },
+      // Flashcard statistics
+      totalFlashcards: {
+        type: Number,
+        default: 0,
+      },
+      totalDecks: {
+        type: Number,
+        default: 0,
+      },
+      totalStudySessions: {
+        type: Number,
+        default: 0,
+      },
+      averageStudyTime: {
+        type: Number,
+        default: 0, // minutes
+      },
+      flashcardAccuracy: {
+        type: Number,
+        default: 0, // percentage
+      },
     },
     // Legacy fields (keeping for backward compatibility)
     age: {

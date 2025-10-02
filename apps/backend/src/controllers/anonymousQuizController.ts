@@ -191,6 +191,12 @@ export const submitAnonymousQuizResult = async (
         totalQuizzes: 0,
         averageScore: 0,
         totalCorrectAnswers: 0,
+        // Flashcard statistics
+        totalFlashcards: 0,
+        totalDecks: 0,
+        totalStudySessions: 0,
+        averageStudyTime: 0,
+        flashcardAccuracy: 0,
       };
     }
 
@@ -202,12 +208,14 @@ export const submitAnonymousQuizResult = async (
       };
     }
 
-    user.statistics.totalQuizzes += 1;
-    user.statistics.totalCorrectAnswers += correctAnswers;
-    user.statistics.averageScore =
-      (user.statistics.averageScore * (user.statistics.totalQuizzes - 1) +
-        correctAnswers) /
-      user.statistics.totalQuizzes;
+    if (user.statistics) {
+      user.statistics.totalQuizzes += 1;
+      user.statistics.totalCorrectAnswers += correctAnswers;
+      user.statistics.averageScore =
+        (user.statistics.averageScore * (user.statistics.totalQuizzes - 1) +
+          correctAnswers) /
+        user.statistics.totalQuizzes;
+    }
 
     const today = new Date();
     const lastQuizDate = user.streak.lastQuizDate;
