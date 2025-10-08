@@ -2,11 +2,19 @@ import SkeletonPlaceholder from "@/app/components/SkeltonPlaceholder";
 import colors from "@/app/constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Alert,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import DeckList from "../components/DeckList";
 import FlashcardGenerator from "../components/FlashcardGenerator";
 // StudyAnalytics and StudyStreak intentionally removed to keep a single global streak on Home
+import AnimatedLoadingModal from "@/app/components/AnimatedLoadingModal";
 import PrimaryButton from "@/app/components/PrimaryButton";
 import { useFlashcardAPI } from "../hooks/useFlashcardAPI";
 
@@ -54,14 +62,42 @@ const FlashcardHome: React.FC = () => {
     longestStreak: 0,
     lastStudyDate: null,
   });
-  const { generateFlashcards, useUserDecks, useStudyProgress, queryClient } =
-    useFlashcardAPI();
+  const {
+    generateFlashcards,
+    generateFlashcardsFromFile,
+    useUserDecks,
+    useStudyProgress,
+    queryClient,
+    generateFlashcardsMutation,
+    generateFlashcardsFromFileMutation,
+  } = useFlashcardAPI();
 
   // Use React Query hooks directly to avoid unstable deps/infinite loops
   const { data: decksData, isLoading: decksLoading } = useUserDecks();
   const { data: statsData, isLoading: statsLoading } = useStudyProgress();
 
   const isLoading = decksLoading || statsLoading;
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefreshStudy = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["flashcard-progress"] }),
+        queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [queryClient]);
+
+  const onRefreshDecks = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [queryClient]);
 
   // Update local state when query data changes
   useEffect(() => {
@@ -99,7 +135,17 @@ const FlashcardHome: React.FC = () => {
     file?: any;
   }) => {
     try {
-      const result = await generateFlashcards(data);
+      let result;
+      if (data.file) {
+        // Prefer file-based generation when a file is provided
+        // Pass category as a generic topic to backend
+        result = await generateFlashcardsFromFile(
+          data.file,
+          data.category || "General"
+        );
+      } else {
+        result = await generateFlashcards(data);
+      }
       if (result) {
         // Invalidate and refetch via React Query
         queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
@@ -164,7 +210,7 @@ const FlashcardHome: React.FC = () => {
   if (isLoading) {
     return (
       <View className="flex-1 bg-background pt-safe">
-        <View className="flex-row bg-white mx-4 rounded-xl p-1 mt-8 mb-4">
+        <View className="flex-row bg-white mx-4 rounded-xl p-1 android:mt-8 mb-4">
           <SkeletonPlaceholder className="flex-1 h-12 rounded-lg mx-1" />
           <SkeletonPlaceholder className="flex-1 h-12 rounded-lg mx-1" />
           <SkeletonPlaceholder className="flex-1 h-12 rounded-lg mx-1" />
@@ -201,7 +247,7 @@ const FlashcardHome: React.FC = () => {
 
   return (
     <View className="flex-1 bg-background pt-safe">
-      <View className="flex-row bg-white mx-4 rounded-xl mt-8 mb-4">
+      <View className="flex-row bg-white mx-4 rounded-xl android:mt-8 mb-4">
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.id}
@@ -229,7 +275,16 @@ const FlashcardHome: React.FC = () => {
 
       <View className="flex-1 px-4">
         {activeTab === "study" && (
-          <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            className="flex-1"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefreshStudy}
+              />
+            }
+          >
             <View className="bg-white rounded-2xl shadow-sm p-6 mb-6">
               <Text className="text-textPrimary font-nunito-bold text-xl mb-6">
                 Study Analytics
@@ -362,7 +417,7 @@ const FlashcardHome: React.FC = () => {
                   onPress={handleStartStudy}
                 />
 
-                <View className="flex-row gap-x-4 ">
+                {/* <View className="flex-row gap-x-4 ">
                   <PrimaryButton
                     onPress={handleQuickTestMode}
                     title=" Test Mode"
@@ -374,7 +429,7 @@ const FlashcardHome: React.FC = () => {
                     onPress={handleQuickWriteMode}
                     className="!bg-green-500 flex-1"
                   />
-                </View>
+                </View> */}
               </View>
             </View>
           </ScrollView>
@@ -394,9 +449,18 @@ const FlashcardHome: React.FC = () => {
             decks={decks}
             onDeckPress={handleDeckPress}
             onStudyPress={handleStudyPress}
+            isLoading={decksLoading}
+            refreshing={refreshing}
+            onRefresh={onRefreshDecks}
           />
         )}
       </View>
+      <AnimatedLoadingModal
+        isVisible={
+          generateFlashcardsMutation.isPending ||
+          generateFlashcardsFromFileMutation.isPending
+        }
+      />
     </View>
   );
 };

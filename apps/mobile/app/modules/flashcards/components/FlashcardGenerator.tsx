@@ -49,12 +49,7 @@ const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   const handleFileUpload = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          "application/pdf",
-          "text/plain",
-          "application/msword",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ],
+        type: ["application/pdf"],
         copyToCacheDirectory: true,
       });
 

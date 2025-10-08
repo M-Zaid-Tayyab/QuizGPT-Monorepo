@@ -78,10 +78,11 @@ export const generateFlashcards = async (
       )
     );
 
-    // Create a new deck
+    // Create a new deck with AI-generated meta
+    const deckMeta = await FlashcardGenerator.generateDeckMeta(text, options);
     const deck = await Deck.create({
-      name: `${category} Flashcards`,
-      description: `AI-generated flashcards for ${category}`,
+      name: deckMeta.name,
+      description: deckMeta.description,
       flashcards: savedFlashcards.map((f) => f._id),
       createdBy: userUuid,
       userType: "anonymous",
@@ -172,12 +173,11 @@ export const generateFlashcardsFromFile = async (
       )
     );
 
-    // Create a new deck
+    // Create a new deck with AI-generated meta
+    const deckMeta = await FlashcardGenerator.generateDeckMeta(text, options);
     const deck = await Deck.create({
-      name: `${options.category} Flashcards`,
-      description: `AI-generated flashcards from ${
-        requestData.file ? "PDF" : "text"
-      }`,
+      name: deckMeta.name,
+      description: deckMeta.description,
       flashcards: savedFlashcards.map((f) => f._id),
       createdBy: userUuid,
       userType: "anonymous",

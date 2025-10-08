@@ -49,7 +49,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         </Text>
       </View>
 
-      <View className="space-y-4">
+      <View className="gap-y-4">
         {question.options.map((option, optionIndex) => (
           <OptionItem
             key={`${questionIndex}-${optionIndex}`}

@@ -40,9 +40,9 @@ const AppStack = () => {
   const initiateRevenueCat = async () => {
     Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
     if (Platform.OS === "ios") {
-      // Purchases.configure({
-      //   apiKey: process.env.EXPO_PUBLIC_REVENUECAT_PROJECT_APPLE_API_KEY || "",
-      // });
+      Purchases.configure({
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_PROJECT_APPLE_API_KEY || "",
+      });
     } else if (Platform.OS === "android") {
       Purchases.configure({
         apiKey: process.env.EXPO_PUBLIC_REVENUECAT_PROJECT_GOOGLE_API_KEY || "",
@@ -79,7 +79,7 @@ const AppStack = () => {
                 topOffset={Platform.OS === "android" ? 30 : 90}
                 visibilityTime={3000}
               />
-              <StatusBar translucent />
+              <StatusBar style="dark" translucent />
             </NavigationContainer>
           </SafeAreaProvider>
         </PaperProvider>

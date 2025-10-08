@@ -62,6 +62,57 @@ export class FlashcardGenerator {
     return flashcards;
   }
 
+  static async generateDeckMeta(
+    text: string,
+    options: FlashcardOptions
+  ): Promise<{ name: string; description: string }> {
+    const { category, count } = options;
+    const metaPrompt = `Based on the following study material, generate a concise deck title and a short, relevant description. 
+
+REQUIREMENTS:
+- Title: <= 60 characters, specific to the content (no generic words like "Flashcards" unless useful)
+- Description: 1 sentence, <= 140 characters, clearly states what the deck covers
+
+CATEGORY: ${category}
+TARGET CARD COUNT: ${count}
+
+STUDY MATERIAL (truncate if long):\n${text.slice(0, 1200)}
+
+Return strict JSON with keys: {"name": string, "description": string}`;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        messages: [{ role: "user", content: metaPrompt }],
+        model: "gpt-3.5-turbo",
+        response_format: { type: "json_object" },
+        temperature: 0.4,
+      });
+
+      const response = completion.choices[0].message.content;
+      if (!response) {
+        throw new Error("No response for deck meta");
+      }
+      const parsed = JSON.parse(response);
+      const name = (parsed.name || `${category} Study Set`)
+        .toString()
+        .slice(0, 60)
+        .trim();
+      const description = (
+        parsed.description || `AI-generated flashcards for ${category}`
+      )
+        .toString()
+        .slice(0, 140)
+        .trim();
+      return { name, description };
+    } catch (error) {
+      console.warn("Falling back to default deck meta:", error);
+      return {
+        name: `${category} Study Set`,
+        description: `AI-generated flashcards for ${category}`,
+      };
+    }
+  }
+
   private static buildFlashcardPrompt(
     text: string,
     options: FlashcardOptions

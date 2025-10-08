@@ -1,9 +1,16 @@
 import PrimaryButton from "@/app/components/PrimaryButton";
+import SkeletonPlaceholder from "@/app/components/SkeltonPlaceholder";
 import colors from "@/app/constants/colors";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { clsx } from "clsx";
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface Deck {
   _id: string;
@@ -25,6 +32,9 @@ interface DeckListProps {
   onEditPress?: (deck: Deck) => void;
   onDeletePress?: (deck: Deck) => void;
   className?: string;
+  isLoading?: boolean;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }
 
 const DeckList: React.FC<DeckListProps> = ({
@@ -34,6 +44,9 @@ const DeckList: React.FC<DeckListProps> = ({
   onEditPress,
   onDeletePress,
   className,
+  isLoading,
+  refreshing = false,
+  onRefresh,
 }) => {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -69,6 +82,16 @@ const DeckList: React.FC<DeckListProps> = ({
     return Math.floor(Math.random() * deck.flashcards.length);
   };
 
+  if (isLoading) {
+    return (
+      <View className={"flex-1 items-center"}>
+        <SkeletonPlaceholder className="w-full h-32 rounded-lg mb-3" />
+        <SkeletonPlaceholder className="w-full h-32 rounded-lg my-3" />
+        <SkeletonPlaceholder className="w-full h-32 rounded-lg my-3" />
+      </View>
+    );
+  }
+
   if (decks.length === 0) {
     return (
       <View
@@ -93,6 +116,16 @@ const DeckList: React.FC<DeckListProps> = ({
     <ScrollView
       className={clsx("flex-1", className)}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        ) : undefined
+      }
     >
       <View className="space-y-4">
         {decks.map((deck) => {

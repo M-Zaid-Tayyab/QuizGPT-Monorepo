@@ -11,7 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.quizgpt",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,8 +25,6 @@
       "package": "com.quizgpt",
       "googleServicesFile": "./google-services.json",
       "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
