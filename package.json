@@ -37,7 +37,8 @@
     "eas:list:builds": "cd apps/mobile && eas build:list",
     "eas:list:updates": "cd apps/mobile && eas update:list",
     "eas:view:build": "cd apps/mobile && eas build:view",
-    "eas:view:update": "cd apps/mobile && eas update:view"
+    "eas:view:update": "cd apps/mobile && eas update:view",
+    "eas:release:ios": "yarn eas:build:ios && yarn eas:submit:ios"
   },
   "devDependencies": {
     "turbo": "^2.0.0"

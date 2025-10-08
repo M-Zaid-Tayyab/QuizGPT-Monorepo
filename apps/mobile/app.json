@@ -13,7 +13,11 @@
       "bundleIdentifier": "com.quizgpt",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to allow selecting files and images for generating quizzes and flashcards.",
+        "NSCameraUsageDescription": "This app uses the camera to scan documents or images for generating quizzes and flashcards.",
+        "NSMicrophoneUsageDescription": "Microphone access is used for optional audio features during study sessions.",
+        "NSDocumentsFolderUsageDescription": "This app accesses your documents for uploading study materials."
       }
     },
     "android": {
@@ -26,7 +30,9 @@
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
       ]
     },
     "web": {
