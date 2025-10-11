@@ -1,6 +1,6 @@
 import colors from "@/app/constants/colors";
 import { FontAwesome6 } from "@expo/vector-icons";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -18,6 +18,7 @@ interface SubscriptionPlanProps {
   trialDays?: number;
   priceValue?: number;
   currencyCode?: string;
+  showWeeklyCalculation?: boolean;
 }
 
 const SubscriptionPlan: React.FC<SubscriptionPlanProps> = ({
@@ -34,12 +35,9 @@ const SubscriptionPlan: React.FC<SubscriptionPlanProps> = ({
   trialDays,
   priceValue,
   currencyCode,
+  showWeeklyCalculation = false,
 }) => {
   const hasTrial = introPrice && introPeriod && trialDays;
-  const showingPrice =
-    period === "week"
-      ? price
-      : `${(priceValue && priceValue / 52)?.toFixed(2)}`;
 
   const titleText =
     period === "week"
@@ -86,13 +84,17 @@ const SubscriptionPlan: React.FC<SubscriptionPlanProps> = ({
                   : `7 days for ${price}, cancel anytime, auto-renews`
                 : `12 months for ${price}, cancel anytime, auto-renews`}
             </Text>
-            <View className="flex-row items-baseline">
-              <Text className="text-textPrimary text-lg font-nunito-semibold">
-                {showingPrice}
-              </Text>
-              <Text className="text-textSecondary text-sm font-nunito ml-1">
-                / week
-              </Text>
+            <View className="items-end">
+              <View className="flex-row items-baseline">
+                <Text className="text-textPrimary text-2xl font-nunito-bold">
+                  {showWeeklyCalculation && period === "year" && priceValue
+                    ? `${(priceValue / 52).toFixed(2)}`
+                    : price}
+                </Text>
+                <Text className="text-textSecondary text-sm font-nunito ml-1">
+                  {period === "week" ? "/ week" : "/ year"}
+                </Text>
+              </View>
             </View>
           </View>
 

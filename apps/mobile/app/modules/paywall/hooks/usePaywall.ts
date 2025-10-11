@@ -1,3 +1,4 @@
+import { useAppFlags } from "@/app/hooks/useAppFlags";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { Alert } from "react-native";
@@ -28,6 +29,7 @@ interface UsePaywallReturn {
   purchasePackage: () => Promise<void>;
   restorePurchases: () => Promise<void>;
   isPurchasing: boolean;
+  showWeeklyCalculation: boolean;
 }
 
 export const usePaywall = (): UsePaywallReturn => {
@@ -37,8 +39,10 @@ export const usePaywall = (): UsePaywallReturn => {
   const [selectedPackage, setSelectedPackage] =
     useState<SubscriptionPackage | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
-  let timeout: any;
+  const { data: appFlags } = useAppFlags();
+
   useEffect(() => {
+    let timeout: any;
     const checkRevenueCat = async () => {
       const isConfigured = await Purchases.isConfigured();
       if (isConfigured) {
@@ -308,5 +312,6 @@ export const usePaywall = (): UsePaywallReturn => {
     purchasePackage,
     restorePurchases,
     isPurchasing,
+    showWeeklyCalculation: appFlags?.paywall?.showWeeklyCalculation || false,
   };
 };
