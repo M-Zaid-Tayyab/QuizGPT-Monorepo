@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useUserStore } from "../../auth/store/userStore";
 import DeckList from "../components/DeckList";
 import FlashcardGenerator from "../components/FlashcardGenerator";
 // StudyAnalytics and StudyStreak intentionally removed to keep a single global streak on Home
@@ -46,6 +47,7 @@ interface StudyStatistics {
 
 const FlashcardHome: React.FC = () => {
   const navigation = useNavigation();
+  const { isProUser, hasUsedFreeDeck, setHasUsedFreeDeck } = useUserStore();
   const [activeTab, setActiveTab] = useState<"study" | "create" | "decks">(
     "study"
   );
@@ -134,6 +136,11 @@ const FlashcardHome: React.FC = () => {
     difficulty: string;
     file?: any;
   }) => {
+    // Non-pro users: allow only a single successful deck generation lifetime
+    if (!isProUser && hasUsedFreeDeck) {
+      (navigation as any).navigate("Paywall");
+      return;
+    }
     try {
       let result;
       if (data.file) {
@@ -151,6 +158,9 @@ const FlashcardHome: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
         queryClient.invalidateQueries({ queryKey: ["flashcard-progress"] });
         setActiveTab("decks");
+        if (!isProUser && !hasUsedFreeDeck) {
+          setHasUsedFreeDeck(true);
+        }
       }
     } catch (error) {
       console.error("Error generating flashcards:", error);

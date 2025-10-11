@@ -29,7 +29,8 @@ const Home: React.FC = () => {
     setQuizCount,
     setLastQuizDate,
     isProUser,
-    lastQuizDate,
+    hasUsedFreeQuiz,
+    setHasUsedFreeQuiz,
   } = useUserStore();
   const [requestText, setRequestText] = useState("");
   const [attachedFile, setAttachedFile] = useState(null);
@@ -129,16 +130,10 @@ const Home: React.FC = () => {
     questionTypes: string[],
     numberOfQuestions: number
   ) => {
-    if (!isProUser && quizCount >= latestUser?.quizLimit && !!lastQuizDate) {
-      const lastQuizDateObj = new Date(lastQuizDate);
-      const currentDate = new Date();
-      const diffTime = currentDate.getTime() - lastQuizDateObj.getTime();
-      const diffHours = diffTime / (1000 * 60 * 60);
-
-      if (diffHours < 24) {
-        (navigation as any).navigate("Paywall");
-        return;
-      }
+    // Non-pro users: allow only a single successful generation lifetime
+    if (!isProUser && hasUsedFreeQuiz) {
+      (navigation as any).navigate("Paywall");
+      return;
     }
 
     const payload = {
@@ -154,6 +149,9 @@ const Home: React.FC = () => {
         console.log("Generated Quiz: ", JSON.stringify(data.data));
         setLastQuizDate(new Date().toISOString());
         setQuizCount(quizCount + 1);
+        if (!isProUser && !hasUsedFreeQuiz) {
+          setHasUsedFreeQuiz(true);
+        }
         (navigation as any).navigate("Quiz", { quizData: data.data });
       },
       onError: (error: any) => {
