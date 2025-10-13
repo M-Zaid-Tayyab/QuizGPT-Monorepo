@@ -4,12 +4,11 @@ import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import React from "react";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
-import { UploadedFile } from "./FileUpload";
 
 interface FilePickerModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onFileSelect: (file: UploadedFile) => void;
+  onFileSelect: (file: any) => void;
 }
 
 const FilePickerModal: React.FC<FilePickerModalProps> = ({
@@ -40,6 +39,10 @@ const FilePickerModal: React.FC<FilePickerModalProps> = ({
 
   const pickImage = async () => {
     try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        return;
+      }
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: "images",
         selectionLimit: 1,
@@ -62,6 +65,11 @@ const FilePickerModal: React.FC<FilePickerModalProps> = ({
 
   const pickFromGallery = async () => {
     try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        return;
+      }
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: "images",
         selectionLimit: 1,
