@@ -15,6 +15,8 @@ export class PromptBuilder {
 
     return `Create a comprehensive EXAM PREPARATION quiz about "${description}" designed to help a ${age}-year-old ${gender} student in ${grade} grade ACE their upcoming exams.
 
+Please respond with a valid JSON object containing the quiz questions.
+
 🎯 EXAM PREPARATION FOCUS:
 - Difficulty Level: ${difficulty.toUpperCase()} (matching exam standards)
 - Total Questions: ${numberOfQuestions}

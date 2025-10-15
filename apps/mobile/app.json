@@ -11,7 +11,14 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.quizgpt",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "This app uses the system photo picker to allow selecting images for generating quizzes and flashcards.",
+        "NSCameraUsageDescription": "This app uses the camera to scan documents or images for generating quizzes and flashcards.",
+        "NSMicrophoneUsageDescription": "Microphone access is used for optional audio features during study sessions.",
+        "NSDocumentsFolderUsageDescription": "This app accesses your documents for uploading study materials."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,8 +29,6 @@
       "package": "com.quizgpt",
       "googleServicesFile": "./google-services.json",
       "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
@@ -55,10 +60,12 @@
           "image": "./assets/icons/splash.png",
           "resizeMode": "cover",
           "backgroundColor": "#ffffff",
+          "imageWidth": 200,
           "dark": {
             "image": "./assets/icons/splash.png",
             "resizeMode": "cover",
-            "backgroundColor": "#000000"
+            "backgroundColor": "#000000",
+            "imageWidth": 200
           }
         }
       ],

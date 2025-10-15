@@ -35,7 +35,6 @@ const OptionItem: React.FC<OptionItemProps> = ({
     <Animated.View
       key={`${questionIndex}-${optionIndex}`}
       style={animatedStyle}
-      className="my-3"
     >
       <TouchableOpacity
         className={`p-4 rounded-xl ${

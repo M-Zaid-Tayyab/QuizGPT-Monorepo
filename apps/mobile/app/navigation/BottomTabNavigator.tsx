@@ -4,6 +4,7 @@ import React from "react";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import colors from "../constants/colors";
+import FlashcardHome from "../modules/flashcards/screens/FlashcardHome";
 import History from "../modules/history/screens/History";
 import Home from "../modules/home/screens/Home";
 import Settings from "../modules/settings/screens/Settings";
@@ -20,6 +21,8 @@ const BottomTabNavigator: React.FC = () => {
 
           if (route.name === "Home") {
             iconName = focused ? "home" : "home-outline";
+          } else if (route.name === "Flashcards") {
+            iconName = focused ? "library" : "library-outline";
           } else if (route.name === "History") {
             iconName = focused ? "time" : "time-outline";
           } else if (route.name === "Settings") {
@@ -53,6 +56,13 @@ const BottomTabNavigator: React.FC = () => {
         component={Home}
         options={{
           tabBarLabel: "Home",
+        }}
+      />
+      <Tab.Screen
+        name="Flashcards"
+        component={FlashcardHome}
+        options={{
+          tabBarLabel: "Flashcards",
         }}
       />
       <Tab.Screen

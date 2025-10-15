@@ -30,6 +30,10 @@ interface UserState {
   setQuizCount: (quizCount: number) => void;
   lastQuizDate: string;
   setLastQuizDate: (lastQuizDate: string) => void;
+  hasUsedFreeQuiz: boolean;
+  setHasUsedFreeQuiz: (used: boolean) => void;
+  hasUsedFreeDeck: boolean;
+  setHasUsedFreeDeck: (used: boolean) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -41,6 +45,8 @@ export const useUserStore = create<UserState>()(
       isProUser: false,
       quizCount: 0,
       lastQuizDate: "",
+      hasUsedFreeQuiz: false,
+      hasUsedFreeDeck: false,
       setUser: (user) => set({ user, isAuthenticated: true }),
 
       setQuizCount: (quizCount: number) =>
@@ -49,6 +55,9 @@ export const useUserStore = create<UserState>()(
         })),
 
       setLastQuizDate: (lastQuizDate: string) => set({ lastQuizDate }),
+
+      setHasUsedFreeQuiz: (used: boolean) => set({ hasUsedFreeQuiz: used }),
+      setHasUsedFreeDeck: (used: boolean) => set({ hasUsedFreeDeck: used }),
 
       onboardingCompleted: (isCompleted: boolean) =>
         set({ isOnboardingCompleted: isCompleted }),

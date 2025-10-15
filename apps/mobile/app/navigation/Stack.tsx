@@ -1,6 +1,8 @@
 import Quiz from "@/app/modules/quiz/screens/Quiz";
 import AuthStack from "@/modules/auth/navigation/AuthStack";
 import { useUserStore } from "@/modules/auth/store/userStore";
+import DeckDetails from "@/modules/flashcards/screens/DeckDetails";
+import StudySession from "@/modules/flashcards/screens/StudySession";
 import Paywall from "@/modules/paywall/screens/Paywall";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
@@ -27,6 +29,8 @@ const Stack = () => {
       <stack.Screen name="Auth" component={AuthStack} />
       <stack.Screen name="Main" component={BottomTabNavigator} />
       <stack.Screen name="Quiz" component={Quiz} />
+      <stack.Screen name="StudySession" component={StudySession} />
+      <stack.Screen name="DeckDetails" component={DeckDetails} />
       <stack.Screen name="Paywall" component={Paywall} />
     </stack.Navigator>
   );

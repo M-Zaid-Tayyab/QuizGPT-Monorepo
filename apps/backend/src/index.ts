@@ -4,7 +4,9 @@ import express from "express";
 import connectDB from "./config/db";
 import anonymousAuthRoutes from "./routes/anonymousAuthRoutes";
 import anonymousQuizRoutes from "./routes/anonymousQuizRoutes";
+import appFlagsRoutes from "./routes/appFlags";
 import authRoutes from "./routes/authRoutes";
+import flashcardRoutes from "./routes/flashcardRoutes";
 import quizRoutes from "./routes/quizRoutes";
 dotenv.config();
 
@@ -19,6 +21,8 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/anonymous/auth", anonymousAuthRoutes);
 app.use("/api/anonymous/quiz", anonymousQuizRoutes);
+app.use("/api/anonymous/flashcards", flashcardRoutes);
 app.use("/api/quiz", quizRoutes);
+app.use("/api/anonymous/app-flags", appFlagsRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

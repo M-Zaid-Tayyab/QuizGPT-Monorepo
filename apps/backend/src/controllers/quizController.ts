@@ -43,6 +43,8 @@ export const generateQuiz = async (
 
     const prompt = `Create an educational, fun, and highly engaging quiz about the topic "${description}" designed specifically for a ${age}-year-old ${gender} kid in ${grade} grade. The quiz should have a "${difficulty}" level of challenge.
 
+Please respond with a valid JSON object containing the quiz questions.
+
 ### 🎯 Goals:
 - Make the quiz feel like a game, not a test.
 - Use imaginative, real-world, or playful scenarios to explain concepts.
@@ -218,6 +220,8 @@ export const generateCustomQuiz = async (
 
     const prompt = `Create a comprehensive educational quiz about "${description}" designed specifically for a ${age}-year-old ${gender} student in ${grade} grade. The quiz should have a "${difficulty}" difficulty level.
 
+Please respond with a valid JSON object containing the quiz questions.
+
 ### 🎯 Academic Goals:
 - Focus on key concepts, definitions, and facts from the provided content
 - Include questions that test understanding, application, and critical thinking
@@ -367,6 +371,12 @@ export const submitQuizResult = async (
         totalQuizzes: 0,
         averageScore: 0,
         totalCorrectAnswers: 0,
+        // Flashcard statistics
+        totalFlashcards: 0,
+        totalDecks: 0,
+        totalStudySessions: 0,
+        averageStudyTime: 0,
+        flashcardAccuracy: 0,
       };
     }
 

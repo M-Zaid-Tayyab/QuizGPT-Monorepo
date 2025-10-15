@@ -22,6 +22,7 @@ const Paywall: React.FC = () => {
     purchasePackage,
     restorePurchases,
     isPurchasing,
+    showWeeklyCalculation,
   } = usePaywall();
 
   const features = [
@@ -152,6 +153,7 @@ const Paywall: React.FC = () => {
               introPeriod={pkg.product.introPeriod}
               trialDays={pkg.product.trialDays}
               currencyCode={pkg.product.currencyCode}
+              showWeeklyCalculation={showWeeklyCalculation}
             />
           ))
         ) : (

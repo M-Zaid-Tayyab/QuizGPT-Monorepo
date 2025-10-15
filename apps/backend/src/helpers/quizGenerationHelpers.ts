@@ -32,11 +32,38 @@ export class InputProcessor {
     req: AnonymousAuthRequest
   ): Promise<QuizRequest> {
     if (req.file) {
+      // Safely handle optional fields from multipart forms
+      const topic = req.body?.topic || "General";
+      const difficulty =
+        req.body?.difficulty || req.anonymousUser?.difficulty || "Medium";
+      let questionTypes: string[] = ["mcq", "true_false", "fill_blank"];
+      const rawQuestionTypes = req.body?.questionTypes;
+      if (rawQuestionTypes) {
+        try {
+          const parsed =
+            typeof rawQuestionTypes === "string"
+              ? JSON.parse(rawQuestionTypes)
+              : rawQuestionTypes;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            questionTypes = parsed as string[];
+          }
+        } catch {
+          // ignore and keep defaults
+        }
+      }
+
+      let numberOfQuestions = 10;
+      const rawNum = req.body?.numberOfQuestions;
+      const parsedNum = parseInt(rawNum, 10);
+      if (!isNaN(parsedNum) && parsedNum > 0 && parsedNum <= 50) {
+        numberOfQuestions = parsedNum;
+      }
+
       return {
-        topic: req.body.topic,
-        difficulty: req.body.difficulty,
-        questionTypes: JSON.parse(req.body.questionTypes),
-        numberOfQuestions: parseInt(req.body.numberOfQuestions, 10),
+        topic,
+        difficulty,
+        questionTypes,
+        numberOfQuestions,
         file: req.file,
       };
     } else {
@@ -323,6 +350,8 @@ ${existingQuestions.map((q, index) => `${index + 1}. ${q}`).join("\n")}
 - Focus on the user's specific request: "${userPrompt}"
 
 📋 RESPONSE FORMAT:
+Please respond with a valid JSON object containing the quiz questions.
+
 Return a JSON object with this EXACT structure:
 {
   "questions": [
