@@ -15,3 +15,4 @@ web-build/
 
 # Flipper (React Native debugging)
 ios/Pods/Flipper*
+.env.local

@@ -1,4 +1,5 @@
 import { NavigationContainer } from "@react-navigation/native";
+import * as Sentry from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
@@ -11,6 +12,28 @@ import Toast, { BaseToast } from "react-native-toast-message";
 import { vexo } from "vexo-analytics";
 import { useUserStore } from "../modules/auth/store/userStore";
 import Stack from "./Stack";
+
+Sentry.init({
+  dsn: "https://b3beb1859d28aebb789df73dfd219b7c@o4510192039297024.ingest.us.sentry.io/4510192057843712",
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: true,
+
+  // Configure Session Replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
+  integrations: [
+    Sentry.mobileReplayIntegration(),
+    Sentry.feedbackIntegration(),
+  ],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 vexo(process.env.EXPO_PUBLIC_VEXO_API_KEY || "");
 
@@ -88,4 +111,4 @@ const AppStack = () => {
   );
 };
 
-export default AppStack;
+export default Sentry.wrap(AppStack);

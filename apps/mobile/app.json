@@ -82,7 +82,15 @@
         }
       ],
       "expo-web-browser",
-      "expo-audio"
+      "expo-audio",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "quizgpt",
+          "organization": "zaid-4z"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

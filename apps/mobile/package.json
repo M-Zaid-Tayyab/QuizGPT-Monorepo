@@ -41,6 +41,7 @@
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/stack": "^7.4.1",
+    "@sentry/react-native": "^6.15.11",
     "@tanstack/react-query": "^5.81.5",
     "axios": "^1.10.0",
     "clsx": "^2.1.1",
