@@ -87,8 +87,11 @@ const Paywall: React.FC = () => {
 
   const getSavings = (pkg: any) => {
     if (pkg.packageType === "ANNUAL") {
-      const weeklyPrice =
-        packages.find((p) => p.packageType === "WEEKLY")?.product.price || 0;
+      const weeklyPackage = packages.find((p) => p.packageType === "WEEKLY");
+      if (!weeklyPackage || weeklyPackage.product.price === 0) {
+        return undefined;
+      }
+      const weeklyPrice = weeklyPackage.product.price;
       const yearlyPrice = pkg.product.price;
       const weeksInYear = 52;
       const totalWeeklyCost = weeklyPrice * weeksInYear;
@@ -176,7 +179,9 @@ const Paywall: React.FC = () => {
               ? selectedPackage.product.trialDays
                 ? `Start ${selectedPackage.product.trialDays}-Day Free Trial`
                 : selectedPackage.packageType === "ANNUAL"
-                ? `Unlock and save ${getSavings(selectedPackage)}`
+                ? getSavings(selectedPackage)
+                  ? `Unlock and save ${getSavings(selectedPackage)}`
+                  : "Unlock Premium Features"
                 : `Start Weekly Plan`
               : "Select a Plan"
           }

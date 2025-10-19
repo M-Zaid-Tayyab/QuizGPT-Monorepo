@@ -2,6 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import * as Sentry from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
+import { SuperwallProvider } from "expo-superwall";
 import React, { useEffect } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -91,23 +92,30 @@ const AppStack = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <PaperProvider>
-          <SafeAreaProvider>
-            <NavigationContainer>
-              <Stack />
-              <Toast
-                config={toastConfig}
-                topOffset={Platform.OS === "android" ? 30 : 90}
-                visibilityTime={3000}
-              />
-              <StatusBar style="dark" translucent />
-            </NavigationContainer>
-          </SafeAreaProvider>
-        </PaperProvider>
-      </GestureHandlerRootView>
-    </QueryClientProvider>
+    <SuperwallProvider
+      apiKeys={{
+        ios: process.env.EXPO_PUBLIC_SUPERWALL_API_KEY,
+        android: process.env.EXPO_PUBLIC_SUPERWALL_API_KEY,
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <PaperProvider>
+            <SafeAreaProvider>
+              <NavigationContainer>
+                <Stack />
+                <Toast
+                  config={toastConfig}
+                  topOffset={Platform.OS === "android" ? 30 : 90}
+                  visibilityTime={3000}
+                />
+                <StatusBar style="dark" translucent />
+              </NavigationContainer>
+            </SafeAreaProvider>
+          </PaperProvider>
+        </GestureHandlerRootView>
+      </QueryClientProvider>
+    </SuperwallProvider>
   );
 };
 
