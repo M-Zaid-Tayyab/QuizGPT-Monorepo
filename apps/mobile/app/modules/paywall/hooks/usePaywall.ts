@@ -70,37 +70,56 @@ export const usePaywall = (): UsePaywallReturn => {
 
       if (offerings.current) {
         const availablePackages = offerings.current.availablePackages;
-
         let allPackages: PurchasesPackage[] = [...availablePackages];
 
-        if (
-          offerings.all &&
-          offerings.all.yearly_pro &&
-          offerings.all.yearly_pro.availablePackages
-        ) {
-          allPackages = [
-            ...availablePackages,
-            ...offerings.all.yearly_pro.availablePackages,
-          ];
+        if (offerings.all) {
+          Object.values(offerings.all).forEach((offering) => {
+            if (offering && offering.availablePackages) {
+              offering.availablePackages.forEach((pkg) => {
+                if (
+                  !allPackages.some(
+                    (existing) => existing.identifier === pkg.identifier
+                  )
+                ) {
+                  allPackages.push(pkg);
+                }
+              });
+            }
+          });
         }
 
         const convertedPackages: SubscriptionPackage[] = allPackages.map(
           (pkg: PurchasesPackage) => {
             const packageType = getPackageType(pkg.packageType);
 
-            const hasIntroPrice = pkg.product.introPrice !== null;
-            let introPrice = undefined;
-            let introPeriod = undefined;
-            let trialDays = undefined;
+            const intro = pkg.product.introPrice as any;
+            let introPrice = undefined as string | undefined;
+            let introPeriod = undefined as string | undefined;
+            let trialDays = undefined as number | undefined;
 
-            if (hasIntroPrice) {
-              introPrice = "Free";
-              if (packageType === "WEEKLY") {
-                trialDays = 3;
-                introPeriod = "3 days free";
-              } else if (packageType === "ANNUAL") {
-                trialDays = 14;
-                introPeriod = "14 days free";
+            if (intro && typeof intro === "object" && intro.price === 0) {
+              const unit = String(
+                intro.periodUnit || intro.period || ""
+              ).toUpperCase();
+              const numUnits = Number(intro.periodNumberOfUnits || 0);
+              const cycles = Number(intro.cycles || 1);
+              const unitsTotal =
+                (Number.isFinite(numUnits) ? numUnits : 0) *
+                (Number.isFinite(cycles) ? cycles : 1);
+
+              const unitToDays: Record<string, number> = {
+                DAY: 1,
+                WEEK: 7,
+                MONTH: 30,
+                YEAR: 365,
+              };
+              const daysPerUnit = unitToDays[unit] || 0;
+              const computedDays = daysPerUnit * unitsTotal;
+
+              if (computedDays > 0) {
+                trialDays = computedDays;
+                introPrice = "Free";
+                introPeriod = `${computedDays} days free`;
               }
             }
 
@@ -183,15 +202,14 @@ export const usePaywall = (): UsePaywallReturn => {
       );
 
       if (!revenueCatPackage && offerings.all) {
-        if (
-          offerings.all.yearly_pro &&
-          offerings.all.yearly_pro.availablePackages
-        ) {
-          revenueCatPackage = offerings.all.yearly_pro.availablePackages.find(
-            (pkg: PurchasesPackage) =>
-              pkg.identifier === selectedPackage.identifier
-          );
-        }
+        Object.values(offerings.all).forEach((offering) => {
+          if (offering && offering.availablePackages && !revenueCatPackage) {
+            revenueCatPackage = offering.availablePackages.find(
+              (pkg: PurchasesPackage) =>
+                pkg.identifier === selectedPackage.identifier
+            );
+          }
+        });
       }
 
       if (!revenueCatPackage) {
@@ -214,7 +232,7 @@ export const usePaywall = (): UsePaywallReturn => {
               if (navigation.canGoBack()) {
                 navigation.goBack();
               } else {
-                navigation.navigate("Main");
+                navigation.navigate("Main" as never);
               }
             },
           },
@@ -227,7 +245,7 @@ export const usePaywall = (): UsePaywallReturn => {
               if (navigation.canGoBack()) {
                 navigation.goBack();
               } else {
-                navigation.navigate("Main");
+                navigation.navigate("Main" as never);
               }
             },
           },

@@ -48,6 +48,63 @@ const SubscriptionPlan: React.FC<SubscriptionPlanProps> = ({
       ? "Yearly Plan"
       : "Weekly Plan";
 
+  const shouldShowWeeklyCalc =
+    showWeeklyCalculation &&
+    period === "year" &&
+    typeof priceValue === "number";
+
+  const formattedWeeklyPrice = (() => {
+    if (!shouldShowWeeklyCalc) return null;
+    const weekly = priceValue! / 52;
+
+    if (typeof price === "string" && price.trim().length > 0) {
+      const trimmed = price.trim();
+      const firstDigitIdx = trimmed.search(/[0-9]/);
+      const lastDigitIdx = (() => {
+        const m = trimmed.match(/.*([0-9])(?!.*[0-9])/);
+        return m ? trimmed.lastIndexOf(m[1]) : -1;
+      })();
+
+      if (firstDigitIdx !== -1) {
+        const prefix = trimmed.slice(0, firstDigitIdx);
+        const suffix =
+          lastDigitIdx !== -1 ? trimmed.slice(lastDigitIdx + 1) : "";
+        const hasPrefixSymbol = prefix.trim().length > 0;
+        const hasSuffixSymbol = suffix.trim().length > 0;
+        const prefixHasSpace = /\s$/.test(prefix);
+        const suffixHasSpace = /^\s/.test(suffix);
+
+        const numberOnly = new Intl.NumberFormat(undefined, {
+          maximumFractionDigits: 2,
+        }).format(weekly);
+
+        if (hasPrefixSymbol) {
+          const symbol = prefix.trim();
+          return `${symbol}${prefixHasSpace ? " " : ""}${numberOnly}`;
+        }
+        if (hasSuffixSymbol) {
+          const symbol = suffix.trim();
+          return `${numberOnly}${suffixHasSpace ? " " : ""}${symbol}`;
+        }
+      }
+    }
+
+    try {
+      if (currencyCode) {
+        return new Intl.NumberFormat(undefined, {
+          style: "currency",
+          currency: currencyCode,
+          currencyDisplay: "symbol",
+          maximumFractionDigits: 2,
+        }).format(weekly);
+      }
+    } catch {}
+
+    return weekly.toFixed(2);
+  })();
+
+  const formattedBasePrice = price;
+
   return (
     <TouchableOpacity
       onPress={onSelect}
@@ -87,12 +144,14 @@ const SubscriptionPlan: React.FC<SubscriptionPlanProps> = ({
             <View className="items-end">
               <View className="flex-row items-baseline">
                 <Text className="text-textPrimary text-2xl font-nunito-bold">
-                  {showWeeklyCalculation && period === "year" && priceValue
-                    ? `${(priceValue / 52).toFixed(2)}`
-                    : price}
+                  {shouldShowWeeklyCalc && formattedWeeklyPrice
+                    ? formattedWeeklyPrice
+                    : formattedBasePrice}
                 </Text>
                 <Text className="text-textSecondary text-sm font-nunito ml-1">
-                  {period === "week" ? "/ week" : "/ year"}
+                  {shouldShowWeeklyCalc || period === "week"
+                    ? "/ week"
+                    : "/ year"}
                 </Text>
               </View>
             </View>
