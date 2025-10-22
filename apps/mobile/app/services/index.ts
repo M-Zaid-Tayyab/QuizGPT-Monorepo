@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useUserStore } from "../modules/auth/store/userStore";
 
-const isDev = true;
 const isLocal = false;
+const isDev = __DEV__;
 const ROOT_URL = isLocal
   ? "https://6befd437d6d0.ngrok-free.app"
   : isDev
