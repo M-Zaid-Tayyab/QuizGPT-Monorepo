@@ -50,8 +50,8 @@ export const useOnboarding = () => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const progressBar = useSharedValue(0);
-  const optionScales = useSharedValue([1, 1, 1, 1]);
-  const optionOpacities = useSharedValue([1, 1, 1, 1]);
+  const optionScales = useSharedValue([1, 1, 1, 1, 1]);
+  const optionOpacities = useSharedValue([1, 1, 1, 1, 1]);
   const cardScale = useSharedValue(1);
   const cardOpacity = useSharedValue(1);
   const iconRotation = useSharedValue(0);
@@ -364,10 +364,12 @@ export const useOnboarding = () => {
     cardOpacity.value = withTiming(1, { duration: 300 });
     iconRotation.value = withSpring(360, { damping: 15, stiffness: 100 });
 
+    resetOptionAnimations();
+
     if (currentQuestionIndex === questions.length - 1) {
       requestStoreReview();
     }
-  }, [currentQuestionIndex]);
+  }, [currentQuestionIndex, resetOptionAnimations]);
 
   const requestStoreReview = async () => {
     try {
@@ -434,20 +436,26 @@ export const useOnboarding = () => {
   }, []);
 
   const resetOptionAnimations = useCallback(() => {
-    optionScales.value = withSpring([1, 1, 1, 1], { damping: 15 });
-    optionOpacities.value = withTiming([1, 1, 1, 1], { duration: 200 });
+    optionScales.value = [1, 1, 1, 1, 1];
+    optionOpacities.value = [1, 1, 1, 1, 1];
   }, []);
 
-  const animateOptionSelection = useCallback((optionIndex: number) => {
-    const newScales = [1, 1, 1, 1];
-    const newOpacities = [0.6, 0.6, 0.6, 0.6];
+  const animateOptionSelection = useCallback(
+    (optionIndex: number) => {
+      const currentQuestion = questions[currentQuestionIndex];
+      const optionCount = currentQuestion.options.length;
 
-    newScales[optionIndex] = 1.05;
-    newOpacities[optionIndex] = 1;
+      const newScales = new Array(optionCount).fill(1);
+      const newOpacities = new Array(optionCount).fill(0.6);
 
-    optionScales.value = withSpring(newScales, { damping: 15 });
-    optionOpacities.value = withTiming(newOpacities, { duration: 200 });
-  }, []);
+      newScales[optionIndex] = 1.05;
+      newOpacities[optionIndex] = 1;
+
+      optionScales.value = withSpring(newScales, { damping: 15 });
+      optionOpacities.value = withTiming(newOpacities, { duration: 200 });
+    },
+    [currentQuestionIndex, questions]
+  );
 
   const handleAnswer = useCallback(
     async (answer: string, optionIndex: number) => {
@@ -472,7 +480,6 @@ export const useOnboarding = () => {
         if (currentQuestionIndex < questions.length - 1) {
           setCurrentQuestionIndex((prev) => prev + 1);
           setSelectedAnswer(null);
-          resetOptionAnimations();
         } else {
           handleOnboarding();
         }
@@ -534,6 +541,11 @@ export const useOnboarding = () => {
     opacity: optionOpacities.value[3],
   }));
 
+  const option4AnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: optionScales.value[4] }],
+    opacity: optionOpacities.value[4],
+  }));
+
   const getOptionAnimatedStyle = useCallback(
     (index: number) => {
       switch (index) {
@@ -545,6 +557,8 @@ export const useOnboarding = () => {
           return option2AnimatedStyle;
         case 3:
           return option3AnimatedStyle;
+        case 4:
+          return option4AnimatedStyle;
         default:
           return option0AnimatedStyle;
       }
@@ -554,6 +568,7 @@ export const useOnboarding = () => {
       option1AnimatedStyle,
       option2AnimatedStyle,
       option3AnimatedStyle,
+      option4AnimatedStyle,
     ]
   );
 
