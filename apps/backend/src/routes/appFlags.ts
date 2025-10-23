@@ -6,7 +6,7 @@ router.get("/", (req, res) => {
   try {
     const flags = {
       paywall: {
-        showWeeklyCalculation: false,
+        showWeeklyCalculation: true,
       },
     };
 
