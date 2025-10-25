@@ -1,26 +1,67 @@
 {
   "project_info": {
-    "project_number": "139831633246",
-    "project_id": "quizgpt-21178",
-    "storage_bucket": "quizgpt-21178.firebasestorage.app"
+    "project_number": "1060733453787",
+    "project_id": "quizgpt-af381",
+    "storage_bucket": "quizgpt-af381.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:139831633246:android:dcc6b68a2982bfc6a55bcf",
+        "mobilesdk_app_id": "1:1060733453787:android:550fb3efae032656f5d3fe",
         "android_client_info": {
           "package_name": "com.quizgpt"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1060733453787-eg9gdcu45evhh2k130opo9rlurmv99fm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.quizgpt",
+            "certificate_hash": "6e18771f2da9710b975124074482db2dfb710825"
+          }
+        },
+        {
+          "client_id": "1060733453787-guqraunt4tj6i74p56fbe81mvptl0i77.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.quizgpt",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "1060733453787-njtvosg9d25kv6ojl8o0gms90n4oip6r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.quizgpt",
+            "certificate_hash": "24fbd73d5aa778f100302047165e763e23f5f53a"
+          }
+        },
+        {
+          "client_id": "1060733453787-0j6tb4dlu0d7ebrqlulup7nbup2flg92.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyCEnmAlma9s5CEoCUw5CI5-FsBgg6pPiA0"
+          "current_key": "AIzaSyCdkJ6Gd6X7J5p53d0UZ0AbZ_eNHp74ZiM"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1060733453787-0j6tb4dlu0d7ebrqlulup7nbup2flg92.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1060733453787-jmna3cq2p1bdb2fgu8rlp8bdujghrl8o.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.quizgpt"
+              }
+            }
+          ]
         }
       }
     }
