@@ -9,6 +9,7 @@ import {
   WelcomeScreen,
 } from "../components";
 import { useOnboarding } from "../hooks/useOnboarding";
+import { useUserStore } from "../store/userStore";
 
 const Onboarding: React.FC = () => {
   const {
@@ -17,7 +18,6 @@ const Onboarding: React.FC = () => {
     selectedAnswer,
     isAnimating,
     questions,
-    registerMutation,
     handleStartOnboarding,
     handleAnswer,
     progressBarAnimatedStyle,
@@ -26,7 +26,9 @@ const Onboarding: React.FC = () => {
     welcomeAnimatedStyle,
     floatingIconStyle,
     getOptionAnimatedStyle,
+    isUpdatingUser,
   } = useOnboarding();
+  const { user } = useUserStore();
 
   return (
     <KeyboardAwareScrollView
@@ -35,7 +37,7 @@ const Onboarding: React.FC = () => {
       contentContainerClassName="flex-grow py-safe"
       bounces={false}
     >
-      {showWelcome ? (
+      {showWelcome && !user?.token ? (
         <WelcomeScreen
           animatedStyle={welcomeAnimatedStyle}
           floatingIconStyle={floatingIconStyle}
@@ -79,11 +81,9 @@ const Onboarding: React.FC = () => {
           </View>
         </>
       )}
-
       <AnimatedLoadingModal
-        isVisible={registerMutation.isPending}
-        messageInterval={1500}
-        messages={["Getting things ready", "Almost there"]}
+        isVisible={isUpdatingUser}
+        messages={["Making personalizations", "Almost there"]}
       />
     </KeyboardAwareScrollView>
   );

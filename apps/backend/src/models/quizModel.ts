@@ -49,6 +49,7 @@ const quizSchema = new mongoose.Schema(
     userType: {
       type: String,
       enum: ["user", "anonymous"],
+      default: "anonymous",
       required: true,
     },
   },

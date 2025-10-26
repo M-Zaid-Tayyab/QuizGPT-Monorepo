@@ -12,7 +12,7 @@ import { usePaywall } from "../hooks/usePaywall";
 
 const Paywall: React.FC = () => {
   const navigation = useNavigation();
-  const { isProUser } = useUserStore();
+  const { user } = useUserStore();
   const { manageSubscription } = useSubscriptionManagement();
   const {
     packages,
@@ -61,7 +61,7 @@ const Paywall: React.FC = () => {
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
-      navigation.reset({
+      (navigation as any).reset({
         index: 0,
         routes: [{ name: "Main" }],
       });
@@ -182,7 +182,7 @@ const Paywall: React.FC = () => {
       <View className="mt-6">
         <PrimaryButton
           title={
-            isProUser
+            user?.isProUser
               ? "Manage Subscription"
               : isPurchasing
               ? "Processing..."
@@ -196,8 +196,8 @@ const Paywall: React.FC = () => {
                 : `Start Weekly Plan`
               : "Select a Plan"
           }
-          onPress={isProUser ? manageSubscription : purchasePackage}
-          disabled={isPurchasing || (!selectedPackage && !isProUser)}
+          onPress={user?.isProUser ? manageSubscription : purchasePackage}
+          disabled={isPurchasing || (!selectedPackage && !user?.isProUser)}
         />
 
         <View className="flex-row justify-center items-center mt-4">

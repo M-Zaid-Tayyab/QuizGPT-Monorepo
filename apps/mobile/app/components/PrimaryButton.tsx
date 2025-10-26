@@ -1,54 +1,41 @@
-import { Image } from "expo-image";
+import clsx from "clsx";
 import React from "react";
-import {
-  ImageStyle,
-  StyleProp,
-  Text,
-  TextStyle,
-  TouchableOpacity,
-  ViewStyle,
-} from "react-native";
+import { Text, TouchableOpacity } from "react-native";
 
 export interface PrimaryButtonProps {
   title?: string;
   onPress: () => void;
   withArrow?: boolean;
-  style?: StyleProp<ViewStyle>;
-  icnStyle?: StyleProp<ImageStyle>;
   animating?: boolean;
-  textStyle?: StyleProp<TextStyle>;
-  icon?: any;
-  leftIcon?: any;
+  icon?: React.ReactNode;
+  leftIcon?: React.ReactNode;
   disabled?: boolean;
-  whiteBackground?: boolean;
-  leftIcnStyle?: StyleProp<ImageStyle>;
   disabledWhileAnimating?: boolean;
   className?: string;
+  textClassName?: string;
 }
 
 const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   title,
   onPress,
-  withArrow,
-  style,
-  icnStyle,
   animating,
-  textStyle,
   icon,
   leftIcon,
   disabled,
-  whiteBackground,
-  leftIcnStyle,
   disabledWhileAnimating,
   className,
+  textClassName,
 }) => {
   return (
     <TouchableOpacity
       disabled={disabled}
-      className={`flex-row items-center justify-center rounded-lg py-4 px-4 ${className} ${
-        disabled ? "opacity-50" : "bg-primary"
-      } ${whiteBackground ? "bg-white" : "bg-primary"}`}
-      style={style}
+      className={clsx(
+        `flex-row items-center justify-center rounded-xl py-4 px-4 bg-primary`,
+        className,
+        {
+          "opacity-50": disabled,
+        }
+      )}
       onPress={() => {
         if (
           disabled === true ||
@@ -58,29 +45,11 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
         } else onPress();
       }}
     >
-      {leftIcon && (
-        <Image
-          source={leftIcon}
-          style={[
-            { width: 20, height: 20, marginRight: 8 } as ImageStyle,
-            leftIcnStyle,
-          ]}
-          contentFit="contain"
-        />
-      )}
-      <Text className="text-white text-base font-semibold" style={textStyle}>
+      {leftIcon && leftIcon}
+      <Text className={clsx(`text-white text-lg font-semibold`, textClassName)}>
         {title}
       </Text>
-      {icon && (
-        <Image
-          source={icon}
-          style={[
-            { width: 20, height: 20, marginLeft: 8 } as ImageStyle,
-            icnStyle,
-          ]}
-          contentFit="contain"
-        />
-      )}
+      {icon && icon}
     </TouchableOpacity>
   );
 };

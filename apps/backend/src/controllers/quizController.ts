@@ -6,7 +6,8 @@ import {
   extractTextFromPDF,
   validateFileType,
 } from "../helpers/textExtractionHelper";
-import { AuthRequest } from "../middleware/authMiddleware";
+import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
+import AnonymousUser from "../models/anonymousUserModel";
 import Quiz from "../models/quizModel";
 import User from "../models/userModel";
 dotenv.config();
@@ -22,12 +23,13 @@ interface QuestionAnswer {
 }
 
 export const generateQuiz = async (
-  req: AuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const user = await User.findById(userId);
+    const userType = req.userType;
+    const user = req.user;
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
@@ -118,7 +120,7 @@ Example format:
       title: response.title,
       questions: response.questions,
       createdBy: userId,
-      userType: "user",
+      userType: userType,
     });
 
     res.status(201).json(quiz);
@@ -129,12 +131,13 @@ Example format:
 };
 
 export const generateCustomQuiz = async (
-  req: AuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const user = await User.findById(userId);
+    const userType = req.userType;
+    const user = req.user;
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
@@ -296,7 +299,7 @@ Example format:
       title: response.title,
       questions: response.questions,
       createdBy: userId,
-      userType: "user",
+      userType: userType,
     });
 
     res.status(201).json(quiz);
@@ -307,11 +310,12 @@ Example format:
 };
 
 export const submitQuizResult = async (
-  req: AuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user._id;
+    const userType = req.userType;
     const { quizId, questions } = req.body as {
       quizId: string;
       questions: QuestionAnswer[];
@@ -321,7 +325,11 @@ export const submitQuizResult = async (
       return;
     }
 
-    const quiz = await Quiz.findById(quizId);
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      createdBy: userId,
+      userType: userType,
+    });
     if (!quiz) {
       res.status(404).json({ message: "Quiz not found" });
       return;
@@ -360,74 +368,25 @@ export const submitQuizResult = async (
 
     await quiz.save();
 
-    const user = await User.findById(userId);
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-
-    if (!user.statistics) {
-      user.statistics = {
-        totalQuizzes: 0,
-        averageScore: 0,
-        totalCorrectAnswers: 0,
-        // Flashcard statistics
-        totalFlashcards: 0,
-        totalDecks: 0,
-        totalStudySessions: 0,
-        averageStudyTime: 0,
-        flashcardAccuracy: 0,
-      };
-    }
-
-    if (!user.streak) {
-      user.streak = {
-        current: 0,
-        longest: 0,
-        lastQuizDate: null,
-      };
-    }
-
-    user.statistics.totalQuizzes += 1;
-    user.statistics.totalCorrectAnswers += correctAnswers;
-    user.statistics.averageScore =
-      (user.statistics.averageScore * (user.statistics.totalQuizzes - 1) +
-        correctAnswers) /
-      user.statistics.totalQuizzes;
-
-    const today = new Date();
-    const lastQuizDate = user.streak.lastQuizDate;
-    if (!lastQuizDate) {
-      user.streak.current = 1;
-      user.streak.longest = 1;
+    // Update user statistics (works for both User and AnonymousUser)
+    if (userType === "user") {
+      await User.findByIdAndUpdate(userId, {
+        $inc: {
+          "statistics.totalQuizzes": 1,
+          "statistics.totalCorrectAnswers": correctAnswers,
+        },
+      });
     } else {
-      const lastQuizUTC = new Date(lastQuizDate.toISOString());
-      const todayUTC = new Date(today.toISOString());
-      lastQuizUTC.setUTCHours(0, 0, 0, 0);
-      todayUTC.setUTCHours(0, 0, 0, 0);
-
-      const diffDays = Math.floor(
-        (todayUTC.getTime() - lastQuizUTC.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      if (diffDays === 0) {
-      } else if (diffDays === 1) {
-        user.streak.current += 1;
-        if (user.streak.current > user.streak.longest) {
-          user.streak.longest = user.streak.current;
-        }
-      } else {
-        user.streak.current = 1;
-      }
+      await AnonymousUser.findByIdAndUpdate(userId, {
+        $inc: {
+          "statistics.totalQuizzes": 1,
+          "statistics.totalCorrectAnswers": correctAnswers,
+        },
+      });
     }
-
-    user.streak.lastQuizDate = today;
-    await user.save();
 
     res.status(200).json({
       message: "Quiz results submitted successfully",
-      statistics: user.statistics,
-      streak: user.streak,
       quiz,
     });
   } catch (error) {
@@ -439,13 +398,18 @@ export const submitQuizResult = async (
 };
 
 export const getQuizHistory = async (
-  req: AuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user._id;
+    const userType = req.userType;
+    const user = req.user;
 
-    const quizzes = await Quiz.find({ createdBy: userId }).sort({
+    const quizzes = await Quiz.find({
+      createdBy: userId,
+      userType: userType,
+    }).sort({
       createdAt: -1,
     });
 

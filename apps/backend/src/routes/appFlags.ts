@@ -8,6 +8,11 @@ router.get("/", (req, res) => {
       paywall: {
         showWeeklyCalculation: true,
       },
+      version: {
+        minimumVersion: "1.3.0",
+        latestVersion: "1.3.0",
+        forceUpdate: false,
+      },
     };
 
     res.json(flags);

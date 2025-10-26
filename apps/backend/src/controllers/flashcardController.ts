@@ -8,18 +8,21 @@ import {
   ReviewResponse,
   SpacedRepetitionService,
 } from "../helpers/spacedRepetitionService";
-import { AnonymousAuthRequest } from "../middleware/anonymousAuthMiddleware";
+import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
 import AnonymousUser from "../models/anonymousUserModel";
 import Deck from "../models/deckModel";
 import Flashcard from "../models/flashcardModel";
+import userModel from "../models/userModel";
 
+// Unified function that works with both user types
 export const generateFlashcards = async (
-  req: AnonymousAuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userUuid = req.anonymousUser._id;
-    const user = await AnonymousUser.findById(userUuid);
+    const userId = req.user._id;
+    const userType = req.userType;
+    const user = req.user;
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -70,8 +73,8 @@ export const generateFlashcards = async (
       flashcards.map((flashcardData) =>
         Flashcard.create({
           ...flashcardData,
-          createdBy: userUuid,
-          userType: "anonymous",
+          createdBy: userId, // Works for both ObjectId and String UUID
+          userType: userType, // "user" or "anonymous"
           sourceMaterial: text,
           generatedFrom: "text",
         })
@@ -84,21 +87,30 @@ export const generateFlashcards = async (
       name: deckMeta.name,
       description: deckMeta.description,
       flashcards: savedFlashcards.map((f) => f._id),
-      createdBy: userUuid,
-      userType: "anonymous",
+      createdBy: userId, // Works for both ObjectId and String UUID
+      userType: userType, // "user" or "anonymous"
       category,
       difficulty,
       sourceMaterial: text,
       generatedFrom: "text",
     });
 
-    // Update user statistics
-    await AnonymousUser.findByIdAndUpdate(userUuid, {
-      $inc: {
-        "statistics.totalFlashcards": savedFlashcards.length,
-        "statistics.totalDecks": 1,
-      },
-    });
+    // Update user statistics (works for both User and AnonymousUser)
+    if (userType === "user") {
+      await userModel.findByIdAndUpdate(userId, {
+        $inc: {
+          "statistics.totalFlashcards": savedFlashcards.length,
+          "statistics.totalDecks": 1,
+        },
+      });
+    } else {
+      await AnonymousUser.findByIdAndUpdate(userId, {
+        $inc: {
+          "statistics.totalFlashcards": savedFlashcards.length,
+          "statistics.totalDecks": 1,
+        },
+      });
+    }
 
     res.status(201).json({
       message: "Flashcards generated successfully",
@@ -113,12 +125,13 @@ export const generateFlashcards = async (
 };
 
 export const generateFlashcardsFromFile = async (
-  req: AnonymousAuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userUuid = req.anonymousUser._id;
-    const user = await AnonymousUser.findById(userUuid);
+    const userId = req.user._id;
+    const userType = req.userType;
+    const user = req.user;
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -165,8 +178,8 @@ export const generateFlashcardsFromFile = async (
       flashcards.map((flashcardData) =>
         Flashcard.create({
           ...flashcardData,
-          createdBy: userUuid,
-          userType: "anonymous",
+          createdBy: userId,
+          userType: userType,
           sourceMaterial: text,
           generatedFrom: requestData.file ? "pdf" : "text",
         })
@@ -179,21 +192,30 @@ export const generateFlashcardsFromFile = async (
       name: deckMeta.name,
       description: deckMeta.description,
       flashcards: savedFlashcards.map((f) => f._id),
-      createdBy: userUuid,
-      userType: "anonymous",
+      createdBy: userId,
+      userType: userType,
       category: options.category,
       difficulty: options.difficulty,
       sourceMaterial: text,
       generatedFrom: requestData.file ? "pdf" : "text",
     });
 
-    // Update user statistics
-    await AnonymousUser.findByIdAndUpdate(userUuid, {
-      $inc: {
-        "statistics.totalFlashcards": savedFlashcards.length,
-        "statistics.totalDecks": 1,
-      },
-    });
+    // Update user statistics (works for both User and AnonymousUser)
+    if (userType === "user") {
+      await userModel.findByIdAndUpdate(userId, {
+        $inc: {
+          "statistics.totalFlashcards": savedFlashcards.length,
+          "statistics.totalDecks": 1,
+        },
+      });
+    } else {
+      await AnonymousUser.findByIdAndUpdate(userId, {
+        $inc: {
+          "statistics.totalFlashcards": savedFlashcards.length,
+          "statistics.totalDecks": 1,
+        },
+      });
+    }
 
     res.status(201).json({
       message: "Flashcards generated successfully",
@@ -208,12 +230,13 @@ export const generateFlashcardsFromFile = async (
 };
 
 export const generateFlashcardsFromQuiz = async (
-  req: AnonymousAuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userUuid = req.anonymousUser._id;
-    const { quizId } = req.params;
+    const userId = req.user._id;
+    const userType = req.userType;
+    const user = req.user;
 
     // Get the quiz (you'll need to implement this based on your quiz model)
     // For now, we'll assume the quiz data is passed in the request body
@@ -238,8 +261,8 @@ export const generateFlashcardsFromQuiz = async (
       flashcards.map((flashcardData) =>
         Flashcard.create({
           ...flashcardData,
-          createdBy: userUuid,
-          userType: "anonymous",
+          createdBy: userId,
+          userType: userType,
           sourceMaterial: quiz.description || "Quiz",
           generatedFrom: "quiz",
         })
@@ -251,21 +274,30 @@ export const generateFlashcardsFromQuiz = async (
       name: `${quiz.title} Flashcards`,
       description: `Flashcards generated from quiz: ${quiz.title}`,
       flashcards: savedFlashcards.map((f) => f._id),
-      createdBy: userUuid,
-      userType: "anonymous",
+      createdBy: userId,
+      userType: userType,
       category: quiz.title,
       difficulty: "Medium",
       sourceMaterial: quiz.description || "Quiz",
       generatedFrom: "quiz",
     });
 
-    // Update user statistics
-    await AnonymousUser.findByIdAndUpdate(userUuid, {
-      $inc: {
-        "statistics.totalFlashcards": savedFlashcards.length,
-        "statistics.totalDecks": 1,
-      },
-    });
+    // Update user statistics (works for both User and AnonymousUser)
+    if (userType === "user") {
+      await userModel.findByIdAndUpdate(userId, {
+        $inc: {
+          "statistics.totalFlashcards": savedFlashcards.length,
+          "statistics.totalDecks": 1,
+        },
+      });
+    } else {
+      await AnonymousUser.findByIdAndUpdate(userId, {
+        $inc: {
+          "statistics.totalFlashcards": savedFlashcards.length,
+          "statistics.totalDecks": 1,
+        },
+      });
+    }
 
     res.status(201).json({
       message: "Flashcards generated successfully",
@@ -280,16 +312,17 @@ export const generateFlashcardsFromQuiz = async (
 };
 
 export const getUserDecks = async (
-  req: AnonymousAuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userUuid = req.anonymousUser._id;
+    const userId = req.user._id;
+    const userType = req.userType;
     const { page = 1, limit = 20, category, difficulty } = req.query;
 
     const query: any = {
-      createdBy: userUuid,
-      userType: "anonymous",
+      createdBy: userId,
+      userType: userType,
     };
 
     if (category) {
@@ -324,11 +357,12 @@ export const getUserDecks = async (
 };
 
 export const createDeck = async (
-  req: AnonymousAuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userUuid = req.anonymousUser._id;
+    const userId = req.user._id;
+    const userType = req.userType;
     const { name, description, category, difficulty, color } = req.body;
 
     if (!name || name.trim().length === 0) {
@@ -339,17 +373,23 @@ export const createDeck = async (
     const deck = await Deck.create({
       name: name.trim(),
       description: description?.trim() || "",
-      createdBy: userUuid,
-      userType: "anonymous",
+      createdBy: userId,
+      userType: userType,
       category: category || "General",
       difficulty: difficulty || "Medium",
       color: color || "#FF6B6B",
     });
 
-    // Update user statistics
-    await AnonymousUser.findByIdAndUpdate(userUuid, {
-      $inc: { "statistics.totalDecks": 1 },
-    });
+    // Update user statistics (works for both User and AnonymousUser)
+    if (userType === "user") {
+      await userModel.findByIdAndUpdate(userId, {
+        $inc: { "statistics.totalDecks": 1 },
+      });
+    } else {
+      await AnonymousUser.findByIdAndUpdate(userId, {
+        $inc: { "statistics.totalDecks": 1 },
+      });
+    }
 
     res.status(201).json({
       message: "Deck created successfully",
@@ -362,17 +402,18 @@ export const createDeck = async (
 };
 
 export const getDeckFlashcards = async (
-  req: AnonymousAuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userUuid = req.anonymousUser._id;
+    const userId = req.user._id;
+    const userType = req.userType;
     const { deckId } = req.params;
 
     const deck = await Deck.findOne({
       _id: deckId,
-      createdBy: userUuid,
-      userType: "anonymous",
+      createdBy: userId,
+      userType: userType,
     }).populate("flashcards");
 
     if (!deck) {
@@ -392,11 +433,12 @@ export const getDeckFlashcards = async (
 };
 
 export const getCardsForReview = async (
-  req: AnonymousAuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userUuid = req.anonymousUser._id;
+    const userId = req.user._id;
+    const userType = req.userType;
     const { limit = 20, deckId } = req.query;
 
     let cards;
@@ -404,8 +446,8 @@ export const getCardsForReview = async (
       // Get cards from specific deck
       const deck = await Deck.findOne({
         _id: deckId,
-        createdBy: userUuid,
-        userType: "anonymous",
+        createdBy: userId,
+        userType: userType,
       }).populate("flashcards");
 
       if (!deck) {
@@ -418,7 +460,7 @@ export const getCardsForReview = async (
     } else {
       // Get all cards due for review
       cards = await SpacedRepetitionService.getCardsForReview(
-        userUuid,
+        userId,
         "anonymous",
         Number(limit)
       );
@@ -435,11 +477,12 @@ export const getCardsForReview = async (
 };
 
 export const submitReview = async (
-  req: AnonymousAuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userUuid = req.anonymousUser._id;
+    const userId = req.user._id;
+    const userType = req.userType;
     const { flashcardId } = req.params;
     const {
       response,
@@ -453,7 +496,7 @@ export const submitReview = async (
     }
 
     const result = await SpacedRepetitionService.submitReview(
-      userUuid,
+      userId,
       flashcardId,
       response as ReviewResponse,
       responseTime || 0,
@@ -465,10 +508,16 @@ export const submitReview = async (
       return;
     }
 
-    // Update user statistics
-    await AnonymousUser.findByIdAndUpdate(userUuid, {
-      $inc: { "statistics.totalStudySessions": 1 },
-    });
+    // Update user statistics (works for both User and AnonymousUser)
+    if (userType === "user") {
+      await userModel.findByIdAndUpdate(userId, {
+        $inc: { "statistics.totalStudySessions": 1 },
+      });
+    } else {
+      await AnonymousUser.findByIdAndUpdate(userId, {
+        $inc: { "statistics.totalStudySessions": 1 },
+      });
+    }
 
     res.status(200).json({
       message: "Review submitted successfully",
@@ -481,15 +530,16 @@ export const submitReview = async (
 };
 
 export const getStudyProgress = async (
-  req: AnonymousAuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userUuid = req.anonymousUser._id;
+    const userId = req.user._id;
+    const userType = req.userType;
 
     const statistics = await SpacedRepetitionService.getStudyStatistics(
-      userUuid,
-      "anonymous"
+      userId,
+      userType
     );
 
     res.status(200).json({

@@ -1,4 +1,5 @@
 export const icn = {
+  google: require("./icons/google.png"),
   eye: require("./icons/eye.png"),
   eyeCrossed: require("./icons/eye-crossed.png"),
   backArrow: require("./icons/back.png"),

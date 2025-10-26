@@ -2,28 +2,76 @@ import { mmkvPersist } from "@/app/storage/zustandMMKV";
 import { create } from "zustand";
 
 export type User = {
-  id: string;
+  _id: string;
   name: string;
   email: string;
+  image?: string;
+  socialId?: string;
+  socialType?: "google" | "apple";
+  isSocialAuth?: boolean;
   token?: string;
-  onboardingData?: {
-    biggestChallenge?: string;
-    studyMethod?: string;
-    studyTime?: string;
-    strugglingSubjects?: string;
-    examConfidence?: string;
-    studyNeeds?: string;
+  streak?: {
+    current: number;
+    longest: number;
+    lastQuizDate?: string;
   };
+  statistics?: {
+    totalQuizzes: number;
+    averageScore: number;
+    totalCorrectAnswers: number;
+    totalFlashcards: number;
+    totalDecks: number;
+    totalStudySessions: number;
+    averageStudyTime: number;
+    flashcardAccuracy: number;
+  };
+  age?: number;
+  grade?: "School" | "College" | "University" | "Post-Graduate";
+  biggestChallenge?:
+    | "memory_retention"
+    | "time_management"
+    | "overwhelmed"
+    | "focus_issues"
+    | "exam_anxiety";
+  studyMethod?:
+    | "rereading"
+    | "highlighting"
+    | "practice_problems"
+    | "study_groups"
+    | "no_system";
+  studyMaterials?:
+    | "textbooks_pdfs"
+    | "lecture_notes"
+    | "research_papers"
+    | "mixed_materials";
+  studyTime?: "less_than_5" | "5_to_10" | "10_to_20" | "more_than_20";
+  strugglingSubjects?:
+    | "math_science"
+    | "languages"
+    | "history_social"
+    | "all_subjects";
+  examConfidence?:
+    | "very_confident"
+    | "somewhat_confident"
+    | "not_confident"
+    | "panic_mode";
+  studyNeeds?:
+    | "memory_techniques"
+    | "faster_methods"
+    | "study_structure"
+    | "exam_practice"
+    | "all_above";
+  isProUser?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 interface UserState {
   user: User | null | any;
   isAuthenticated: boolean;
   isOnboardingCompleted: boolean;
-  isProUser: boolean;
-  setIsProUser: (isProUser: boolean) => void;
   onboardingCompleted: (isCompleted: boolean) => void;
-  setUser: (user: User) => void;
+  setUser: (user: Partial<User>) => void;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
   quizCount: number;
@@ -42,12 +90,15 @@ export const useUserStore = create<UserState>()(
       user: null,
       isAuthenticated: false,
       isOnboardingCompleted: false,
-      isProUser: false,
       quizCount: 0,
       lastQuizDate: "",
       hasUsedFreeQuiz: false,
       hasUsedFreeDeck: false,
-      setUser: (user) => set({ user, isAuthenticated: true }),
+      setUser: (user) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...user } : user,
+          isAuthenticated: true,
+        })),
 
       setQuizCount: (quizCount: number) =>
         set((state) => ({
@@ -61,8 +112,6 @@ export const useUserStore = create<UserState>()(
 
       onboardingCompleted: (isCompleted: boolean) =>
         set({ isOnboardingCompleted: isCompleted }),
-
-      setIsProUser: (isProUser: boolean) => set({ isProUser }),
 
       logout: () =>
         set({

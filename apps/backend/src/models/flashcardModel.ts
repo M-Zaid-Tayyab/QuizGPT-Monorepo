@@ -22,9 +22,8 @@ const flashcardSchema = new mongoose.Schema(
       required: true,
     },
     tags: [String],
-    // Anonymous user support
     createdBy: {
-      type: String, // UUID instead of ObjectId for anonymous users
+      type: mongoose.Schema.Types.Mixed,
       required: true,
     },
     userType: {
@@ -32,10 +31,9 @@ const flashcardSchema = new mongoose.Schema(
       enum: ["user", "anonymous"],
       default: "anonymous",
     },
-    // Spaced Repetition Algorithm Fields (SuperMemo)
     interval: {
       type: Number,
-      default: 1, // days
+      default: 1,
     },
     repetitions: {
       type: Number,
@@ -43,7 +41,7 @@ const flashcardSchema = new mongoose.Schema(
     },
     ease: {
       type: Number,
-      default: 2.5, // SuperMemo algorithm default
+      default: 2.5,
     },
     lastReviewed: {
       type: Date,
@@ -53,7 +51,6 @@ const flashcardSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    // Study Statistics
     correctCount: {
       type: Number,
       default: 0,
@@ -62,13 +59,11 @@ const flashcardSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    // AI Generation Metadata
     sourceMaterial: String,
     generatedFrom: {
       type: String,
       enum: ["pdf", "image", "text", "quiz"],
     },
-    // Quality and validation
     isApproved: {
       type: Boolean,
       default: true,
@@ -83,11 +78,8 @@ const flashcardSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes for performance
 flashcardSchema.index({ createdBy: 1, nextReview: 1 });
 flashcardSchema.index({ createdBy: 1, category: 1 });
 flashcardSchema.index({ createdBy: 1, userType: 1 });
 
 export default mongoose.model("Flashcard", flashcardSchema);
-
-

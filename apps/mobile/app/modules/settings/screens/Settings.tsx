@@ -5,6 +5,7 @@ import colors from "@/app/constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useNavigation } from "@react-navigation/native";
+import * as Application from "expo-application";
 import React from "react";
 import {
   Linking,
@@ -19,7 +20,7 @@ import ProQuizGpt from "../components/ProQuizGpt";
 
 const Settings: React.FC = () => {
   const navigation = useNavigation();
-  const { logout, isProUser } = useUserStore();
+  const { logout, user } = useUserStore();
   const featureSheetRef = React.useRef<BottomSheetModal | null>(null);
 
   const handleLogout = () => {
@@ -27,7 +28,7 @@ const Settings: React.FC = () => {
     logout();
     (navigation as any).reset({
       index: 0,
-      routes: [{ name: "Auth" }],
+      routes: [{ name: "Auth", params: { screen: "Login" } }],
     });
   };
 
@@ -123,7 +124,7 @@ const Settings: React.FC = () => {
           <ProQuizGpt />
         </View>
 
-        {isProUser && (
+        {user?.isProUser && (
           <View className="px-4 mb-5">
             <Text className="text-lg font-nunito-bold text-gray-900 mb-4">
               Subscription
@@ -183,7 +184,9 @@ const Settings: React.FC = () => {
                 <Text className="text-gray-900 font-nunito-bold text-base">
                   App Version
                 </Text>
-                <Text className="text-gray-500 text-sm mt-1">1.0.0</Text>
+                <Text className="text-gray-500 text-sm mt-1">
+                  {Application.nativeApplicationVersion}
+                </Text>
               </View>
             </View>
 
@@ -199,7 +202,9 @@ const Settings: React.FC = () => {
                 <Text className="text-gray-900 font-nunito-bold text-base">
                   Build Number
                 </Text>
-                <Text className="text-gray-500 text-sm mt-1">30</Text>
+                <Text className="text-gray-500 text-sm mt-1">
+                  {Application.nativeBuildVersion}
+                </Text>
               </View>
             </View>
           </View>
@@ -207,7 +212,7 @@ const Settings: React.FC = () => {
 
         <View className="px-4">
           <TouchableOpacity
-            className="flex-row items-center justify-center p-5 bg-red/10 rounded-2xl border border-red/20"
+            className="flex-row items-center justify-center p-4 bg-red/10 rounded-xl border border-red/20"
             onPress={handleLogout}
             activeOpacity={0.8}
           >

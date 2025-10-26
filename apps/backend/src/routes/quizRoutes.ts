@@ -2,11 +2,10 @@ import express from "express";
 import multer from "multer";
 import {
   generateCustomQuiz,
-  generateQuiz,
   getQuizHistory,
   submitQuizResult,
 } from "../controllers/quizController";
-import { protect } from "../middleware/authMiddleware";
+import { protectUnified } from "../middleware/unifiedAuthMiddleware";
 
 const router = express.Router();
 
@@ -51,15 +50,21 @@ const handleMulterError = (
   next();
 };
 
-router.get("/generate", protect, generateQuiz);
 router.post(
-  "/generate-custom",
-  protect,
+  "/generate",
+  protectUnified,
   upload.single("file"),
   handleMulterError,
   generateCustomQuiz
 );
-router.post("/submit", protect, submitQuizResult);
-router.get("/history", protect, getQuizHistory);
+router.post(
+  "/generate-custom",
+  protectUnified,
+  upload.single("file"),
+  handleMulterError,
+  generateCustomQuiz
+);
+router.post("/submit", protectUnified, submitQuizResult);
+router.get("/history", protectUnified, getQuizHistory);
 
 export default router;

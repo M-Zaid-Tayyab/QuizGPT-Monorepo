@@ -11,11 +11,10 @@ import {
   getUserDecks,
   submitReview,
 } from "../controllers/flashcardController";
-import { anonymousAuthMiddleware } from "../middleware/anonymousAuthMiddleware";
+import { protectUnified } from "../middleware/unifiedAuthMiddleware";
 
 const router = express.Router();
 
-// Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -37,10 +36,8 @@ const upload = multer({
   },
 });
 
-// All routes require anonymous authentication
-router.use(anonymousAuthMiddleware);
+router.use(protectUnified);
 
-// Flashcard Generation Routes
 router.post("/generate", generateFlashcards);
 router.post(
   "/generate-from-file",
@@ -49,12 +46,10 @@ router.post(
 );
 router.post("/generate-from-quiz", generateFlashcardsFromQuiz);
 
-// Deck Management Routes
 router.get("/decks", getUserDecks);
 router.post("/decks", createDeck);
 router.get("/decks/:deckId/flashcards", getDeckFlashcards);
 
-// Study Routes
 router.get("/review", getCardsForReview);
 router.post("/review/:flashcardId", submitReview);
 router.get("/progress", getStudyProgress);
