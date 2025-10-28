@@ -30,7 +30,6 @@ const anonymousUserSchema = new mongoose.Schema(
         type: Number,
         default: 0,
       },
-      // Flashcard statistics
       totalFlashcards: {
         type: Number,
         default: 0,
@@ -52,7 +51,6 @@ const anonymousUserSchema = new mongoose.Schema(
         default: 0, // percentage
       },
     },
-    // Legacy fields (keeping for backward compatibility)
     age: {
       type: Number,
     },
@@ -73,7 +71,6 @@ const anonymousUserSchema = new mongoose.Schema(
       enum: ["Male", "Female", "Other"],
     },
 
-    // New pain point fields
     biggestChallenge: {
       type: String,
       enum: [

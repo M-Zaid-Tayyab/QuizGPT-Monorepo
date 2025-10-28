@@ -47,7 +47,7 @@ interface StudyStatistics {
 
 const FlashcardHome: React.FC = () => {
   const navigation = useNavigation();
-  const { isProUser, hasUsedFreeDeck, setHasUsedFreeDeck } = useUserStore();
+  const { user, hasUsedFreeDeck, setHasUsedFreeDeck } = useUserStore();
   const [activeTab, setActiveTab] = useState<"study" | "create" | "decks">(
     "study"
   );
@@ -137,7 +137,7 @@ const FlashcardHome: React.FC = () => {
     file?: any;
   }) => {
     // Non-pro users: allow only a single successful deck generation lifetime
-    if (!isProUser && hasUsedFreeDeck) {
+    if (!user?.isProUser && hasUsedFreeDeck) {
       (navigation as any).navigate("Paywall");
       return;
     }
@@ -158,7 +158,7 @@ const FlashcardHome: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
         queryClient.invalidateQueries({ queryKey: ["flashcard-progress"] });
         setActiveTab("decks");
-        if (!isProUser && !hasUsedFreeDeck) {
+        if (!user?.isProUser && !hasUsedFreeDeck) {
           setHasUsedFreeDeck(true);
         }
       }
@@ -220,7 +220,7 @@ const FlashcardHome: React.FC = () => {
   if (isLoading) {
     return (
       <View className="flex-1 bg-background pt-safe">
-        <View className="flex-row bg-white mx-4 rounded-xl p-1 android:mt-8 mb-4">
+        <View className="flex-row bg-white mx-4 rounded-xl p-1 ios:mt-4 android:mt-8 mb-4">
           <SkeletonPlaceholder className="flex-1 h-12 rounded-lg mx-1" />
           <SkeletonPlaceholder className="flex-1 h-12 rounded-lg mx-1" />
           <SkeletonPlaceholder className="flex-1 h-12 rounded-lg mx-1" />
@@ -257,7 +257,7 @@ const FlashcardHome: React.FC = () => {
 
   return (
     <View className="flex-1 bg-background pt-safe">
-      <View className="flex-row bg-white mx-4 rounded-xl android:mt-8 mb-4">
+      <View className="flex-row bg-white mx-4 rounded-xl ios:mt-4 android:mt-8 mb-4">
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.id}

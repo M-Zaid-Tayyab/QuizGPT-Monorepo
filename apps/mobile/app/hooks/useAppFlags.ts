@@ -5,6 +5,11 @@ interface AppFlags {
   paywall: {
     showWeeklyCalculation: boolean;
   };
+  version: {
+    minimumVersion: string;
+    latestVersion: string;
+    forceUpdate: boolean;
+  };
 }
 
 const fetchAppFlags = async (): Promise<AppFlags> => {

@@ -1,3 +1,4 @@
+import useApis from "@/app/modules/auth/hooks/useApis";
 import { useUserStore } from "@/app/modules/auth/store/userStore";
 import { useEffect, useState } from "react";
 import { Alert, Linking, Platform } from "react-native";
@@ -13,10 +14,11 @@ interface SubscriptionInfo {
 }
 
 export const useSubscriptionManagement = () => {
-  const { isProUser, setIsProUser } = useUserStore();
+  const { user, setUser } = useUserStore();
   const [subscriptionInfo, setSubscriptionInfo] =
     useState<SubscriptionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { updateSubscriptionStatusMutation } = useApis();
 
   const loadSubscriptionInfo = async () => {
     try {
@@ -52,6 +54,15 @@ export const useSubscriptionManagement = () => {
           isActive: true,
           productId: activeSubscription || undefined,
         });
+
+        try {
+          await updateSubscriptionStatusMutation.mutateAsync(true);
+        } catch (error) {
+          console.error(
+            "Failed to sync subscription status with backend:",
+            error
+          );
+        }
       } else {
         setSubscriptionInfo({
           status: "Inactive",
@@ -59,6 +70,15 @@ export const useSubscriptionManagement = () => {
           nextBillingDate: "N/A",
           isActive: false,
         });
+
+        try {
+          await updateSubscriptionStatusMutation.mutateAsync(false);
+        } catch (error) {
+          console.error(
+            "Failed to sync subscription status with backend:",
+            error
+          );
+        }
       }
     } catch (error) {
       console.error("Error loading subscription info:", error);
@@ -120,7 +140,17 @@ export const useSubscriptionManagement = () => {
       const customerInfo = await Purchases.getCustomerInfo();
       const isSubscribed =
         customerInfo.entitlements.active["pro_quizgpt"] !== undefined;
-      setIsProUser(isSubscribed);
+
+      try {
+        await updateSubscriptionStatusMutation.mutateAsync(isSubscribed);
+      } catch (error) {
+        console.error(
+          "Failed to sync subscription status with backend:",
+          error
+        );
+      }
+
+      setUser({ isProUser: isSubscribed });
       await loadSubscriptionInfo();
     } catch (error) {
       console.error("Error refreshing subscription status:", error);
@@ -129,12 +159,12 @@ export const useSubscriptionManagement = () => {
 
   useEffect(() => {
     loadSubscriptionInfo();
-  }, [isProUser]);
+  }, [user?.isProUser]);
 
   return {
     subscriptionInfo,
     isLoading,
-    isProUser,
+    isProUser: user?.isProUser || false,
     loadSubscriptionInfo,
     manageSubscription,
     refreshSubscriptionStatus,

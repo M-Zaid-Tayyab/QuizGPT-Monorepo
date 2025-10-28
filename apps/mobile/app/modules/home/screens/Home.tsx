@@ -28,7 +28,6 @@ const Home: React.FC = () => {
     quizCount,
     setQuizCount,
     setLastQuizDate,
-    isProUser,
     hasUsedFreeQuiz,
     setHasUsedFreeQuiz,
   } = useUserStore();
@@ -56,7 +55,7 @@ const Home: React.FC = () => {
         queryClient.clear();
         (navigation as any).reset({
           index: 0,
-          routes: [{ name: "Auth" }],
+          routes: [{ name: "Auth", params: { screen: "Login" } }],
         });
       }
       return false;
@@ -131,7 +130,7 @@ const Home: React.FC = () => {
     numberOfQuestions: number
   ) => {
     // Non-pro users: allow only a single successful generation lifetime
-    if (!isProUser && hasUsedFreeQuiz) {
+    if (!user?.isProUser && hasUsedFreeQuiz) {
       (navigation as any).navigate("Paywall");
       return;
     }
@@ -149,7 +148,7 @@ const Home: React.FC = () => {
         console.log("Generated Quiz: ", JSON.stringify(data.data));
         setLastQuizDate(new Date().toISOString());
         setQuizCount(quizCount + 1);
-        if (!isProUser && !hasUsedFreeQuiz) {
+        if (!user?.isProUser && !hasUsedFreeQuiz) {
           setHasUsedFreeQuiz(true);
         }
         (navigation as any).navigate("Quiz", { quizData: data.data });

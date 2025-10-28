@@ -14,17 +14,16 @@ const userSchema = new mongoose.Schema(
     image: {
       type: String,
     },
-    password: {
+    socialId: {
       type: String,
-      required: true,
     },
-    isVerified: {
+    socialType: {
+      type: String,
+      enum: ["google", "apple"],
+    },
+    isSocialAuth: {
       type: Boolean,
       default: false,
-    },
-    otp: {
-      code: String,
-      expiresAt: Date,
     },
     streak: {
       current: {
@@ -50,7 +49,6 @@ const userSchema = new mongoose.Schema(
         type: Number,
         default: 0,
       },
-      // Flashcard statistics
       totalFlashcards: {
         type: Number,
         default: 0,
@@ -73,20 +71,71 @@ const userSchema = new mongoose.Schema(
       },
     },
     age: {
-      type: String,
-      enum: ["8-12", "13-18", "19-25", "25+"],
+      type: Number,
     },
     grade: {
       type: String,
-      enum: ["Elementary", "Middle School", "High School", "College"],
+      enum: ["School", "College", "University", "Post-Graduate"],
     },
-    difficulty: {
+    biggestChallenge: {
       type: String,
-      enum: ["Easy", "Medium", "Hard"],
+      enum: [
+        "memory_retention",
+        "time_management",
+        "overwhelmed",
+        "focus_issues",
+        "exam_anxiety",
+      ],
     },
-    gender: {
+    studyMethod: {
       type: String,
-      enum: ["Male", "Female", "Other"],
+      enum: [
+        "rereading",
+        "highlighting",
+        "practice_problems",
+        "study_groups",
+        "no_system",
+      ],
+    },
+    studyMaterials: {
+      type: String,
+      enum: [
+        "textbooks_pdfs",
+        "lecture_notes",
+        "research_papers",
+        "mixed_materials",
+      ],
+    },
+    studyTime: {
+      type: String,
+      enum: ["less_than_5", "5_to_10", "10_to_20", "more_than_20"],
+    },
+    strugglingSubjects: {
+      type: String,
+      enum: ["math_science", "languages", "history_social", "all_subjects"],
+    },
+    examConfidence: {
+      type: String,
+      enum: [
+        "very_confident",
+        "somewhat_confident",
+        "not_confident",
+        "panic_mode",
+      ],
+    },
+    studyNeeds: {
+      type: String,
+      enum: [
+        "memory_techniques",
+        "faster_methods",
+        "study_structure",
+        "exam_practice",
+        "all_above",
+      ],
+    },
+    isProUser: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

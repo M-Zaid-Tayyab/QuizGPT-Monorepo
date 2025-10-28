@@ -3,11 +3,7 @@ import React from "react";
 
 import Onboarding from "../screens/Onboarding";
 
-export type AuthStackParamList = {
-  Onboarding: undefined;
-};
-
-const Stack = createStackNavigator<AuthStackParamList>();
+const Stack = createStackNavigator();
 
 const AuthStack: React.FC = () => {
   return (

@@ -1,6 +1,7 @@
 import { useAppFlags } from "@/app/hooks/useAppFlags";
+import useApis from "@/app/modules/auth/hooks/useApis";
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import Purchases, { PurchasesPackage } from "react-native-purchases";
 import { usePaywallStore } from "../store/paywallStore";
@@ -40,27 +41,9 @@ export const usePaywall = (): UsePaywallReturn => {
     useState<SubscriptionPackage | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const { data: appFlags } = useAppFlags();
+  const { updateSubscriptionStatusMutation } = useApis();
 
-  useEffect(() => {
-    let timeout: any;
-    const checkRevenueCat = async () => {
-      const isConfigured = await Purchases.isConfigured();
-      if (isConfigured) {
-        loadOfferings();
-        return;
-      } else {
-        timeout = setTimeout(() => {
-          checkRevenueCat();
-        }, 1000);
-      }
-    };
-    checkRevenueCat();
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, []);
-
-  const loadOfferings = async () => {
+  const loadOfferings = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -167,7 +150,26 @@ export const usePaywall = (): UsePaywallReturn => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setPackages]);
+
+  useEffect(() => {
+    let timeout: any;
+    const checkRevenueCat = async () => {
+      const isConfigured = await Purchases.isConfigured();
+      if (isConfigured) {
+        loadOfferings();
+        return;
+      } else {
+        timeout = setTimeout(() => {
+          checkRevenueCat();
+        }, 1000);
+      }
+    };
+    checkRevenueCat();
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [loadOfferings]);
 
   const getPackageType = (packageType: string): string => {
     switch (packageType) {
@@ -221,6 +223,15 @@ export const usePaywall = (): UsePaywallReturn => {
       );
 
       if (customerInfo.entitlements.active["pro_quizgpt"]) {
+        try {
+          await updateSubscriptionStatusMutation.mutateAsync(true);
+        } catch (error) {
+          console.error(
+            "Failed to sync subscription status with backend:",
+            error
+          );
+        }
+
         const trialMessage = selectedPackage.product.trialDays
           ? `Your ${selectedPackage.product.trialDays}-day free trial has started! After the trial, you'll be charged ${selectedPackage.product.priceString}.`
           : "Your subscription is now active. Enjoy unlimited access to all features!";
@@ -288,6 +299,15 @@ export const usePaywall = (): UsePaywallReturn => {
       const customerInfo = await Purchases.restorePurchases();
 
       if (customerInfo.entitlements.active["pro_quizgpt"]) {
+        try {
+          await updateSubscriptionStatusMutation.mutateAsync(true);
+        } catch (error) {
+          console.error(
+            "Failed to sync subscription status with backend:",
+            error
+          );
+        }
+
         Alert.alert(
           "Purchases Restored! 🎉",
           "Your premium subscription has been restored successfully!",
@@ -305,6 +325,15 @@ export const usePaywall = (): UsePaywallReturn => {
           ]
         );
       } else {
+        try {
+          await updateSubscriptionStatusMutation.mutateAsync(false);
+        } catch (error) {
+          console.error(
+            "Failed to sync subscription status with backend:",
+            error
+          );
+        }
+
         Alert.alert(
           "No Active Purchases",
           "No active premium subscriptions found to restore.",

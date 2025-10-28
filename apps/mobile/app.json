@@ -2,7 +2,7 @@
   "expo": {
     "name": "QuizGPT",
     "slug": "QuizGPT",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icons/ios-icon.png",
     "scheme": "quizgpt",
@@ -10,6 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "usesAppleSignIn": true,
       "bundleIdentifier": "com.quizgpt",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
@@ -18,7 +19,8 @@
         "NSCameraUsageDescription": "This app uses the camera to scan documents or images for generating quizzes and flashcards.",
         "NSMicrophoneUsageDescription": "Microphone access is used for optional audio features during study sessions.",
         "NSDocumentsFolderUsageDescription": "This app accesses your documents for uploading study materials."
-      }
+      },
+      "appleTeamId": "J35C3N342N"
     },
     "android": {
       "adaptiveIcon": {
@@ -40,6 +42,9 @@
     },
     "plugins": [
       "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-google-signin/google-signin",
+      ["expo-apple-authentication"],
       [
         "expo-build-properties",
         {

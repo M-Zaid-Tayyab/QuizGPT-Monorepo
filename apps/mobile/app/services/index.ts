@@ -4,11 +4,11 @@ import { useUserStore } from "../modules/auth/store/userStore";
 const isLocal = false;
 const isDev = __DEV__;
 const ROOT_URL = isLocal
-  ? "https://6befd437d6d0.ngrok-free.app"
+  ? "https://62bbe0104adf.ngrok-free.app"
   : isDev
   ? "https://quizgpt-backend-development.up.railway.app"
   : "https://quizgpt-backend-production.up.railway.app";
-const BASE_URL = `${ROOT_URL}/api/anonymous/`;
+const BASE_URL = `${ROOT_URL}/api/`;
 
 const createClient = (isFormData = false) => {
   const client = axios.create({

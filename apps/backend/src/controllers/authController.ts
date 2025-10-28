@@ -1,156 +1,145 @@
-import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { sendOTPEmail } from "../helpers/emailHelper";
 import { uploadToCloudinary } from "../helpers/uploadHelper";
-import { AuthRequest } from "../middleware/authMiddleware";
+import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
+import AnonymousUser from "../models/anonymousUserModel";
 import Quiz from "../models/quizModel";
-import { default as User, default as userModel } from "../models/userModel";
+import { default as userModel } from "../models/userModel";
 dotenv.config();
 
-export const register = async (req: Request, res: Response): Promise<void> => {
+export const socialLogin = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const { name, email, password, age, grade, difficulty, gender } = req.body;
+    const { name, email, socialId, socialType, idToken, onboardingData } =
+      req.body;
 
-    const existingUser = await userModel.findOne({ email });
-    if (existingUser) {
-      res.status(400).json({ message: "Email already registered" });
+    if (!email || !socialId || !socialType) {
+      res.status(400).json({
+        message: "Missing required fields: email, socialId, socialType",
+      });
       return;
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await userModel.create({
-      name,
-      email,
-      password: hashedPassword,
+
+    let user = await userModel.findOne({
+      $or: [{ email }, { socialId, socialType }],
+    });
+
+    if (user) {
+      if (!user.socialId) {
+        user.socialId = socialId;
+        user.socialType = socialType;
+        user.isSocialAuth = true;
+      }
+
+      if (onboardingData) {
+        user.biggestChallenge = onboardingData.biggestChallenge;
+        user.studyMethod = onboardingData.studyMethod;
+        user.examConfidence = onboardingData.examConfidence;
+        user.studyMaterials = onboardingData.studyMaterials;
+        user.age = onboardingData.age;
+        user.strugglingSubjects = onboardingData.strugglingSubjects;
+        user.studyNeeds = onboardingData.studyNeeds;
+      }
+
+      await user.save();
+    } else {
+      const userData: any = {
+        name,
+        email,
+        socialId,
+        socialType,
+        isSocialAuth: true,
+      };
+
+      if (onboardingData) {
+        userData.biggestChallenge = onboardingData.biggestChallenge;
+        userData.studyMethod = onboardingData.studyMethod;
+        userData.examConfidence = onboardingData.examConfidence;
+        userData.studyMaterials = onboardingData.studyMaterials;
+        userData.age = onboardingData.age;
+        userData.strugglingSubjects = onboardingData.strugglingSubjects;
+        userData.studyNeeds = onboardingData.studyNeeds;
+      }
+
+      user = await userModel.create(userData);
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+      expiresIn: "100000d",
+    });
+
+    res.status(200).json({
+      token,
+      user,
+    });
+  } catch (error) {
+    console.error("Social login error:", error);
+    res.status(500).json({ message: "Social login failed" });
+  }
+};
+
+export const createAnonymousUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const {
+      uuid,
+      biggestChallenge,
+      studyMethod,
+      examConfidence,
+      studyMaterials,
       age,
+      strugglingSubjects,
+      studyNeeds,
       grade,
       difficulty,
       gender,
+      referral,
+      isProUser = false,
+    } = req.body;
+
+    if (!uuid) {
+      res.status(400).json({ message: "UUID is required" });
+      return;
+    }
+
+    const existingUser = await AnonymousUser.findById(uuid);
+    if (existingUser) {
+      res.status(400).json({ message: "UUID already registered" });
+      return;
+    }
+
+    const user = await AnonymousUser.create({
+      _id: uuid,
+      biggestChallenge,
+      studyMethod,
+      examConfidence,
+      studyMaterials,
+      age,
+      strugglingSubjects,
+      studyNeeds,
+      grade,
+      difficulty,
+      gender,
+      referral,
+      isProUser,
     });
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+
+    const token = jwt.sign({ uuid: user._id }, process.env.JWT_SECRET!, {
       expiresIn: "100000d",
     });
 
     res.status(201).json({ user, token });
   } catch (error) {
+    console.error("Error creating anonymous user:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-export const verifyOTP = async (req: Request, res: Response) => {
-  try {
-    const { email, otp } = req.body;
-    const user = await userModel.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (user.otp?.code !== otp) {
-      console.log(user?.otp, otp);
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    if (user.otp?.expiresAt && user.otp.expiresAt < new Date()) {
-      return res.status(400).json({ message: "OTP has expired" });
-    }
-
-    user.isVerified = true;
-    user.otp = undefined;
-    await user.save();
-
-    res.json({ message: "OTP verified successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-export const login = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { email, password } = req.body;
-    const user = await userModel.findOne({ email }).select("+password");
-
-    if (!user) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
-    }
-
-    if (!(await bcrypt.compare(password, user.password))) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
-    }
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
-      expiresIn: "100000d",
-    });
-    res.status(200).json({ token, user });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-export const forgotPassword = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { email } = req.body;
-    const user = await userModel.findOne({ email });
-
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-
-    user.otp = { code: otp, expiresAt: otpExpiry };
-    await user.save();
-
-    await sendOTPEmail(email, otp);
-    res.status(200).json({ message: "OTP sent successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-export const resetPassword = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { email, newPassword } = req.body;
-
-    if (!newPassword) {
-      res.status(400).json({ message: "New password is required" });
-      return;
-    }
-
-    const user = await userModel.findOne({
-      email,
-    });
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-    if (user?.isVerified === false) {
-      res.status(400).json({ message: "User is not verified" });
-      return;
-    }
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    user.otp = undefined;
-    user.isVerified = false;
-    await user.save();
-
-    res.status(200).json({ message: "Password reset successful" });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
 function hasStreakGap(lastQuizDate: Date | null): boolean {
   if (!lastQuizDate) return false;
 
@@ -161,13 +150,15 @@ function hasStreakGap(lastQuizDate: Date | null): boolean {
 
   return diffInHours >= 24;
 }
+
 export const getUserDetails = async (
-  req: AuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const userId = req.user?._id;
-    const user = await User.findById(userId);
+    const userId = req.user._id;
+    const userType = req.userType;
+    const user = req.user;
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -189,72 +180,86 @@ export const getUserDetails = async (
 
     res.status(200).json({
       user: user,
+      userType: userType,
+      quizLimit: userType === "anonymous" ? 1 : undefined,
     });
   } catch (error) {
     console.error("Error getting user stats:", error);
     res.status(500).json({ message: "Error getting user stats" });
   }
 };
-export const editUser = async (
-  req: AuthRequest,
+
+export const updateUser = async (
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const { name, age, grade, difficulty, gender } = req.body;
+    const userType = req.userType;
+    const user = req.user;
     const file = req.file;
 
-    const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    if (name) {
-      user.name = name;
-    }
+    const updateData = req.body;
 
-    if (file) {
+    delete updateData.email;
+
+    const filteredUpdateData: any = {};
+    Object.keys(updateData).forEach((key) => {
+      if (key !== "email") {
+        filteredUpdateData[key] = updateData[key];
+      }
+    });
+
+    if (file && userType === "user") {
       const newImageUrl = await uploadToCloudinary(file.buffer);
-      user.image = newImageUrl;
+      filteredUpdateData.image = newImageUrl;
     }
 
-    if (age) {
-      user.age = age;
+    if (userType === "anonymous") {
+      Object.assign(user, filteredUpdateData);
+      await user.save();
+    } else {
+      await userModel.findByIdAndUpdate(userId, filteredUpdateData);
     }
 
-    if (gender) {
-      user.gender = gender;
-    }
-
-    if (grade) {
-      user.grade = grade;
-    }
-
-    if (difficulty) {
-      user.difficulty = difficulty;
-    }
-
-    await user.save();
-
-    res.status(200).json({ message: "User updated successfully", user });
+    res.status(200).json({
+      message: "User updated successfully",
+      updatedFields: Object.keys(filteredUpdateData),
+      userType: userType,
+    });
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({ message: "Error updating user" });
   }
 };
+
 export const deleteUser = async (
-  req: AuthRequest,
+  req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    await Quiz.deleteMany({ createdBy: userId });
-    const deletedUser = await User.findByIdAndDelete(userId);
+    const userType = req.userType;
 
-    if (!deletedUser) {
-      res.status(404).json({ message: "User not found" });
-      return;
+    await Quiz.deleteMany({ createdBy: userId });
+
+    if (userType === "anonymous") {
+      const deletedUser = await AnonymousUser.findByIdAndDelete(userId);
+      if (!deletedUser) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+    } else {
+      const deletedUser = await userModel.findByIdAndDelete(userId);
+      if (!deletedUser) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
     }
 
     res.status(200).json({ message: "User deleted successfully" });
