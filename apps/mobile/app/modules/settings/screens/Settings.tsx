@@ -57,8 +57,20 @@ const Settings: React.FC = () => {
         contentContainerClassName="pt-safe pb-10"
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-4 mt-6 mb-5">
+        <View className="px-4 mt-6">
           <Text className="text-lg font-semibold text-gray-900 mb-4">
+            Account
+          </Text>
+          <View className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <Text className="text-textPrimary text-base mt-1">
+              {user?.name}
+            </Text>
+            <Text className="text-textSecondary text-base mt-1 mb-4">
+              {user?.email}
+            </Text>
+          </View>
+
+          <Text className="text-lg font-semibold text-gray-900 my-4">
             Legal & Privacy
           </Text>
 
@@ -117,7 +129,7 @@ const Settings: React.FC = () => {
           </View>
         </View>
 
-        <View className="px-4 mb-5">
+        <View className="px-4 my-4">
           <Text className="text-lg font-nunito-bold text-gray-900 mb-4">
             Premium
           </Text>
@@ -125,7 +137,7 @@ const Settings: React.FC = () => {
         </View>
 
         {user?.isProUser && (
-          <View className="px-4 mb-5">
+          <View className="px-4 my-4">
             <Text className="text-lg font-nunito-bold text-gray-900 mb-4">
               Subscription
             </Text>
@@ -133,7 +145,7 @@ const Settings: React.FC = () => {
           </View>
         )}
 
-        <View className="px-4 mb-5">
+        <View className="px-4 my-4">
           <Text className="text-lg font-nunito-bold text-gray-900 mb-4">
             Support
           </Text>
@@ -166,7 +178,7 @@ const Settings: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <View className="px-4 pb-6">
+        <View className="px-4 my-4">
           <Text className="text-lg font-semibold text-gray-900 mb-4">
             App Information
           </Text>
