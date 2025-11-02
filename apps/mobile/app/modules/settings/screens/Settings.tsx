@@ -1,6 +1,7 @@
 import { mmkv } from "@/app/storage/mmkv";
 import { useUserStore } from "../../auth/store/userStore";
 
+import Header from "@/app/components/Header";
 import colors from "@/app/constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -52,9 +53,9 @@ const Settings: React.FC = () => {
 
   return (
     <View className="flex-1 bg-background">
+      <Header title="Settings" />
       <ScrollView
-        className="flex-1 bg-background"
-        contentContainerClassName="pt-safe pb-10"
+        contentContainerClassName="flex-grow pb-10"
         showsVerticalScrollIndicator={false}
       >
         <View className="px-4 mt-6">

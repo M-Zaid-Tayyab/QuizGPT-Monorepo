@@ -7,7 +7,7 @@ interface Flashcard {
   back: string;
   difficulty: string;
   category: string;
-  tags: string[];
+  tags?: string[];
 }
 
 interface FlashcardFaceBackProps {
@@ -44,14 +44,14 @@ const FlashcardFaceBack: React.FC<FlashcardFaceBackProps> = ({
         {flashcard.back}
       </Text>
 
-      {flashcard.tags.length > 0 && (
+      {flashcard.tags && flashcard.tags.length > 0 && (
         <View className="flex-row flex-wrap justify-center gap-2">
           {flashcard.tags.map((tag, tagIndex) => (
             <View
               key={tagIndex}
-              className="bg-primary/10 px-3 py-1.5 rounded-full"
+              className="px-3 py-1.5 rounded-full bg-primary/10"
             >
-              <Text className="text-primary font-nunito-medium text-xs">
+              <Text className="font-nunito-medium text-xs text-primary">
                 {tag}
               </Text>
             </View>

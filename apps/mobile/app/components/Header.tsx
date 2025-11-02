@@ -52,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <View
       className={clsx(
-        "flex-row items-center justify-between px-4 py-safe",
+        "flex-row items-center justify-between px-4 pt-safe",
         {
           "bg-transparent": transparent,
           "bg-background": !transparent,

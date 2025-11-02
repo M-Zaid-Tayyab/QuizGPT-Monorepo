@@ -189,10 +189,21 @@ export const useFlashcardAPI = () => {
     return generateFlashcardsMutation.mutateAsync(data);
   };
 
-  const generateFlashcardsFromFile = async (file: any, topic: string) => {
+  const generateFlashcardsFromFile = async (
+    file: any,
+    topic: string,
+    difficulty: string,
+    count: number
+  ) => {
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("topic", topic);
+    formData.append("file", {
+      uri: file.uri,
+      type: file.type || "application/octet-stream",
+      name: file.name || "file",
+    } as any);
+    formData.append("topic", topic || "");
+    formData.append("difficulty", difficulty || "medium");
+    formData.append("numberOfQuestions", count.toString());
     return generateFlashcardsFromFileMutation.mutateAsync(formData);
   };
 

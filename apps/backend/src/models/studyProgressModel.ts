@@ -27,15 +27,14 @@ const studySessionSchema = new mongoose.Schema({
 
 const studyProgressSchema = new mongoose.Schema(
   {
-    // Anonymous user support
     userId: {
-      type: String, // UUID for anonymous users
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
     userType: {
       type: String,
-      enum: ["user", "anonymous"],
-      default: "anonymous",
+      enum: ["user"],
+      default: "user",
     },
     flashcardId: {
       type: mongoose.Schema.Types.ObjectId,

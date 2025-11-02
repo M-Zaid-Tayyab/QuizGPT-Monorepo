@@ -19,6 +19,9 @@ const colors = {
   red: "#EF4444",
   orange: "#F97316",
   darkPurple: "#8B5CF6",
+  // Theme-specific colors for study types
+  quizColor: "#FF6B6B", // Primary red/pink for quizzes
+  flashcardColor: "#8B5CF6", // Purple for flashcards
 };
 
 module.exports = colors;

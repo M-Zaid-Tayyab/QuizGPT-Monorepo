@@ -1,13 +1,13 @@
 import dotenv from "dotenv";
 import { Response } from "express";
 import OpenAI from "openai";
+import { PromptBuilder } from "../helpers/promptBuilder";
 import {
   extractTextFromImage,
   extractTextFromPDF,
   validateFileType,
 } from "../helpers/textExtractionHelper";
 import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
-import AnonymousUser from "../models/anonymousUserModel";
 import Quiz from "../models/quizModel";
 import User from "../models/userModel";
 dotenv.config();
@@ -22,121 +22,12 @@ interface QuestionAnswer {
   userTextAnswer?: string;
 }
 
-export const generateQuiz = async (
-  req: UnifiedAuthRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    const userId = req.user._id;
-    const userType = req.userType;
-    const user = req.user;
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-    const { age, grade, difficulty, gender } = user;
-
-    const description = req.query.prompt as string;
-
-    if (!description) {
-      res.status(400).json({ message: "Description is required" });
-      return;
-    }
-
-    const prompt = `Create an educational, fun, and highly engaging quiz about the topic "${description}" designed specifically for a ${age}-year-old ${gender} kid in ${grade} grade. The quiz should have a "${difficulty}" level of challenge.
-
-Please respond with a valid JSON object containing the quiz questions.
-
-### 🎯 Goals:
-- Make the quiz feel like a game, not a test.
-- Use imaginative, real-world, or playful scenarios to explain concepts.
-- Include surprising, creative, and unpredictable elements.
-- Keep questions short, challenging, and relevant to the topic.
-- Randomize both the questions and the order of the options.
-- Each question should encourage curiosity and critical thinking.
-- Mix different question types: Multiple Choice Questions (MCQ), True/False questions, and Fill-in-the-blank questions.
-
-### 📝 Question Types:
-- **MCQ Questions**: 4 options with one correct answer
-- **True/False Questions**: Simple True or False statements
-- **Fill-in-the-blank Questions**: Questions with blanks to fill in (provide correct answers)
-
-### 🎲 Question Distribution:
-- Generate 5-6 MCQ questions, 2-3 True/False questions, and 2-3 Fill-in-the-blank questions (total 10 questions)
-- Mix the question types randomly throughout the quiz
-- For True/False questions, make them clear and unambiguous
-- For Fill-in-the-blank questions, use clear blanks (____) and provide the correct answer without unnecessary symbols or units unless essential to the answer
-
-Format the response as a JSON object with a title and a "questions" array with 10 questions where each question object has:
-- question: the question text with blanks marked as ____ (required)
-- questionType: either "mcq", "true_false", or "fill_blank" (required)
-- options: array of 4 options for MCQ, ["True", "False"] for True/False, or [correct_answer] for Fill-in-the-blank (required)
-- correctAnswer: index of the correct answer (0-3 for MCQ, 0-1 for True/False, 0 for Fill-in-the-blank) (required)
-
-Example format:
-{
-  "title": "Animals Quiz",
-  "questions": [
-    {
-      "question": "Which of these animals can fly?",
-      "questionType": "mcq",
-      "options": ["Dog", "Elephant", "Parrot", "Lion"],
-      "correctAnswer": 2
-    },
-    {
-      "question": "All birds can fly.",
-      "questionType": "true_false",
-      "options": ["True", "False"],
-      "correctAnswer": 1
-    },
-    {
-      "question": "3/10 as a percentage is ____.",
-      "questionType": "fill_blank",
-      "options": ["30"],
-      "correctAnswer": 0
-    }
-  ]
-}`;
-
-    const completion = await openai.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: "gpt-3.5-turbo",
-      response_format: { type: "json_object" },
-    });
-
-    if (!completion.choices[0].message.content) {
-      throw new Error("No content received from OpenAI");
-    }
-
-    const response = JSON.parse(completion.choices[0].message.content);
-    console.log("Response from OpenAI:", response.questions);
-
-    if (!response.questions || !Array.isArray(response.questions)) {
-      throw new Error("Invalid response format from OpenAI");
-    }
-
-    const quiz = await Quiz.create({
-      description: description,
-      title: response.title,
-      questions: response.questions,
-      createdBy: userId,
-      userType: userType,
-    });
-
-    res.status(201).json(quiz);
-  } catch (error) {
-    console.error("Error generating quiz:", error);
-    res.status(500).json({ message: "Error generating quiz" });
-  }
-};
-
 export const generateCustomQuiz = async (
   req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const user = req.user;
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -144,13 +35,19 @@ export const generateCustomQuiz = async (
     }
     const { age, grade, gender } = user;
 
-    let topic, difficulty, questionTypes, numberOfQuestions, description;
+    let userInstructions,
+      difficulty,
+      questionTypes,
+      numberOfQuestions,
+      description,
+      examType;
 
     if (req.file) {
-      topic = req.body.topic;
+      userInstructions = req.body.topic || req.body.instructions || ""; // Optional user instructions
       difficulty = req.body.difficulty;
       questionTypes = JSON.parse(req.body.questionTypes);
       numberOfQuestions = parseInt(req.body.numberOfQuestions, 10);
+      examType = req.body.examType || "general";
 
       const fileType = validateFileType(req.file.mimetype);
 
@@ -181,7 +78,10 @@ export const generateCustomQuiz = async (
           fileText = fileText.substring(0, 2000) + "...";
         }
 
-        description = `Topic: ${topic}\n\nStudy Material:\n${fileText}`;
+        // Use file content as primary, user instructions as optional context
+        description = userInstructions
+          ? `${userInstructions}\n\nStudy Material:\n${fileText}`
+          : fileText;
       } catch (error) {
         console.error("Error extracting text from file:", error);
         res.status(500).json({
@@ -190,14 +90,24 @@ export const generateCustomQuiz = async (
         return;
       }
     } else {
-      ({ topic, difficulty, questionTypes, numberOfQuestions } = req.body);
-      description = topic;
+      const { topic, difficulty, questionTypes, numberOfQuestions, examType: examTypeFromBody } =
+        req.body;
+      // For text-only, the user input IS the content to analyze
+      description = topic || "";
+      examType = examTypeFromBody || "general";
     }
 
-    if (!topic || !difficulty || !questionTypes || !numberOfQuestions) {
+    if (!description || description.trim().length === 0) {
+      res.status(400).json({
+        message: "Content is required (either file or text input)",
+      });
+      return;
+    }
+
+    if (!difficulty || !questionTypes || !numberOfQuestions) {
       res.status(400).json({
         message:
-          "Topic, difficulty, questionTypes, and numberOfQuestions are required",
+          "Difficulty, questionTypes, and numberOfQuestions are required",
       });
       return;
     }
@@ -216,66 +126,13 @@ export const generateCustomQuiz = async (
       return;
     }
 
-    const questionTypeDistribution = questionTypes.join(", ");
-    const mcqCount = Math.ceil(numberOfQuestions * 0.6);
-    const trueFalseCount = Math.ceil(numberOfQuestions * 0.2);
-    const fillBlankCount = numberOfQuestions - mcqCount - trueFalseCount;
-
-    const prompt = `Create a comprehensive educational quiz about "${description}" designed specifically for a ${age}-year-old ${gender} student in ${grade} grade. The quiz should have a "${difficulty}" difficulty level.
-
-Please respond with a valid JSON object containing the quiz questions.
-
-### 🎯 Academic Goals:
-- Focus on key concepts, definitions, and facts from the provided content
-- Include questions that test understanding, application, and critical thinking
-- Use clear, precise language appropriate for academic assessment
-- Ensure questions are directly relevant to the content
-- Make the quiz engaging and educational
-
-### 📚 Question Types to Include:
-- Generate ${mcqCount} Multiple Choice Questions (MCQ) with 4 options each
-- Generate ${trueFalseCount} True/False questions
-- Generate ${fillBlankCount} Fill-in-the-blank questions
-- Mix the question types randomly throughout the quiz
-- For True/False questions, make them clear and unambiguous
-- For Fill-in-the-blank questions, use clear blanks (____) and provide the correct answer
-
-### 🎓 Content Focus:
-- Questions should cover the most important aspects of the provided content
-- Include both factual recall and problem-solving questions
-- Use academic terminology and precise language
-- Cover key concepts, processes, and relationships
-
-Format the response as a JSON object with a title that clearly indicates the topic and a "questions" array with ${numberOfQuestions} questions where each question object has:
-- question: the question text with blanks marked as ____ (required)
-- questionType: either "mcq", "true_false", or "fill_blank" (required)
-- options: array of 4 options for MCQ, ["True", "False"] for True/False, or [correct_answer] for Fill-in-the-blank (required)
-- correctAnswer: index of the correct answer (0-3 for MCQ, 0-1 for True/False, 0 for Fill-in-the-blank) (required)
-
-Example format:
-{
-  "title": "${topic} Quiz",
-  "questions": [
-    {
-      "question": "What is the primary function of chlorophyll in photosynthesis?",
-      "questionType": "mcq",
-      "options": ["Store glucose", "Absorb light energy", "Release oxygen", "Break down water"],
-      "correctAnswer": 1
-    },
-    {
-      "question": "Photosynthesis only occurs in green plants.",
-      "questionType": "true_false",
-      "options": ["True", "False"],
-      "correctAnswer": 1
-    },
-    {
-      "question": "The process of photosynthesis converts light energy into ____ energy.",
-      "questionType": "fill_blank",
-      "options": ["chemical"],
-      "correctAnswer": 0
-    }
-  ]
-}`;
+    const prompt = PromptBuilder.buildOptimizedPrompt(description, {
+      difficulty,
+      questionTypes,
+      numberOfQuestions,
+      user: { age, grade, gender },
+      examType,
+    });
 
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
@@ -299,7 +156,6 @@ Example format:
       title: response.title,
       questions: response.questions,
       createdBy: userId,
-      userType: userType,
     });
 
     res.status(201).json(quiz);
@@ -315,7 +171,6 @@ export const submitQuizResult = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const { quizId, questions } = req.body as {
       quizId: string;
       questions: QuestionAnswer[];
@@ -328,7 +183,6 @@ export const submitQuizResult = async (
     const quiz = await Quiz.findOne({
       _id: quizId,
       createdBy: userId,
-      userType: userType,
     });
     if (!quiz) {
       res.status(404).json({ message: "Quiz not found" });
@@ -368,22 +222,13 @@ export const submitQuizResult = async (
 
     await quiz.save();
 
-    // Update user statistics (works for both User and AnonymousUser)
-    if (userType === "user") {
+    // Update user statistics
       await User.findByIdAndUpdate(userId, {
         $inc: {
           "statistics.totalQuizzes": 1,
           "statistics.totalCorrectAnswers": correctAnswers,
         },
       });
-    } else {
-      await AnonymousUser.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalQuizzes": 1,
-          "statistics.totalCorrectAnswers": correctAnswers,
-        },
-      });
-    }
 
     res.status(200).json({
       message: "Quiz results submitted successfully",
@@ -403,12 +248,10 @@ export const getQuizHistory = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const user = req.user;
 
     const quizzes = await Quiz.find({
       createdBy: userId,
-      userType: userType,
     }).sort({
       createdAt: -1,
     });
@@ -420,5 +263,103 @@ export const getQuizHistory = async (
   } catch (error) {
     console.error("Error fetching quiz history:", error);
     res.status(500).json({ message: "Error fetching quiz history" });
+  }
+};
+
+export const explainAnswer = async (
+  req: UnifiedAuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user._id;
+    const { quizId, questionIndex, selectedAnswerIndex, correctAnswerIndex } =
+      req.body;
+
+    if (!quizId || questionIndex === undefined) {
+      res.status(400).json({
+        message: "Quiz ID and question index are required",
+      });
+      return;
+    }
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      createdBy: userId,
+    });
+
+    if (!quiz) {
+      res.status(404).json({ message: "Quiz not found" });
+      return;
+    }
+
+    const questionIndexNum = parseInt(questionIndex, 10);
+    if (
+      isNaN(questionIndexNum) ||
+      questionIndexNum < 0 ||
+      questionIndexNum >= quiz.questions.length
+    ) {
+      res.status(400).json({ message: "Invalid question index" });
+      return;
+    }
+
+    const question = quiz.questions[questionIndexNum];
+    const selectedIndex =
+      selectedAnswerIndex !== undefined
+        ? parseInt(selectedAnswerIndex, 10)
+        : undefined;
+    const correctIndex =
+      correctAnswerIndex !== undefined
+        ? parseInt(correctAnswerIndex, 10)
+        : question.correctAnswer;
+
+    const isCorrect = selectedIndex !== undefined && selectedIndex === correctIndex;
+
+    const prompt = `Explain this quiz question to help the student understand why the answer is correct or incorrect.
+
+Question: ${question.question}
+Question Type: ${question.questionType}
+Options: ${question.options.join(", ")}
+
+${selectedIndex !== undefined
+  ? `Selected Answer: ${question.options[selectedIndex]}`
+  : "No answer selected"}
+Correct Answer: ${question.options[correctIndex]}
+
+${isCorrect
+  ? "The student got this correct."
+  : "The student got this incorrect."}
+
+Provide a clear, educational explanation that:
+1. Explains why the correct answer is right
+${!isCorrect && selectedIndex !== undefined
+  ? `2. Explains why the selected answer "${question.options[selectedIndex]}" is wrong`
+  : ""}
+3. Helps the student understand the concept
+4. Uses appropriate language for educational purposes
+5. Is concise but thorough (2-3 sentences)
+
+Return a JSON object with this structure:
+{
+  "explanation": "Your explanation here"
+}`;
+
+    const completion = await openai.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: "gpt-3.5-turbo",
+      response_format: { type: "json_object" },
+    });
+
+    if (!completion.choices[0].message.content) {
+      throw new Error("No content received from OpenAI");
+    }
+
+    const response = JSON.parse(completion.choices[0].message.content);
+
+    res.status(200).json({
+      explanation: response.explanation || "Explanation not available",
+    });
+  } catch (error) {
+    console.error("Error explaining answer:", error);
+    res.status(500).json({ message: "Error generating explanation" });
   }
 };

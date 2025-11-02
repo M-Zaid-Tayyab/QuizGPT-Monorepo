@@ -17,8 +17,8 @@ const deckSchema = new mongoose.Schema(
     },
     userType: {
       type: String,
-      enum: ["user", "anonymous"],
-      default: "anonymous",
+      enum: ["user"],
+      default: "user",
     },
     flashcards: [
       {

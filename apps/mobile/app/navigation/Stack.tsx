@@ -1,15 +1,16 @@
 import Quiz from "@/app/modules/quiz/screens/Quiz";
 import AuthStack from "@/modules/auth/navigation/AuthStack";
 import { useUserStore } from "@/modules/auth/store/userStore";
-import DeckDetails from "@/modules/flashcards/screens/DeckDetails";
-import StudySession from "@/modules/flashcards/screens/StudySession";
+import FlashcardScreen from "@/modules/flashcards/screens/FlashcardScreen";
+import Home from "@/modules/home/screens/Home";
+import Search from "@/modules/home/screens/Search";
 import Paywall from "@/modules/paywall/screens/Paywall";
+import Settings from "@/modules/settings/screens/Settings";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { Platform } from "react-native";
 import ForceUpdateModal from "../components/ForceUpdateModal";
 import { useForceUpdate } from "../hooks/useForceUpdate";
-import BottomTabNavigator from "./BottomTabNavigator";
 
 const stack = createNativeStackNavigator();
 
@@ -26,15 +27,16 @@ const Stack = () => {
           animation: Platform.OS === "android" ? "fade" : "default",
         }}
         initialRouteName={
-          isAuthorized ? (user?.isProUser ? "Main" : "Paywall") : "Auth"
+          isAuthorized ? (user?.isProUser ? "Main" : "Main") : "Auth"
         }
       >
         <stack.Screen name="Auth" component={AuthStack} />
-        <stack.Screen name="Main" component={BottomTabNavigator} />
+        <stack.Screen name="Main" component={Home} />
+        <stack.Screen name="Search" component={Search} />
         <stack.Screen name="Quiz" component={Quiz} />
-        <stack.Screen name="StudySession" component={StudySession} />
-        <stack.Screen name="DeckDetails" component={DeckDetails} />
+        <stack.Screen name="FlashcardScreen" component={FlashcardScreen} />
         <stack.Screen name="Paywall" component={Paywall} />
+        <stack.Screen name="Settings" component={Settings} />
       </stack.Navigator>
       <ForceUpdateModal
         visible={shouldForceUpdate}

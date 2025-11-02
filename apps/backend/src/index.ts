@@ -6,6 +6,7 @@ import appFlagsRoutes from "./routes/appFlags";
 import authRoutes from "./routes/authRoutes";
 import flashcardRoutes from "./routes/flashcardRoutes";
 import quizRoutes from "./routes/quizRoutes";
+import searchRoutes from "./routes/searchRoutes";
 dotenv.config();
 
 const app = express();
@@ -19,6 +20,7 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/flashcards", flashcardRoutes);
+app.use("/api/search", searchRoutes);
 app.use("/api/app-flags", appFlagsRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

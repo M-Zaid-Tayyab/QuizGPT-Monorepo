@@ -19,7 +19,7 @@ const QuizHeader: React.FC<QuizHeaderProps> = ({
   return (
     <View className="flex-row justify-between py-4">
       <TouchableOpacity onPress={onBackPress}>
-        <Ionicons name="arrow-back" size={24} color={colors.black} />
+        <Ionicons name="chevron-back" size={24} color={colors.black} />
       </TouchableOpacity>
       <Text
         className="text-xl font-nunito-bold text-textPrimary text-center w-[60%]"

@@ -47,11 +47,9 @@ const FlashcardStudy: React.FC<FlashcardStudyProps> = ({
   const [confidenceLevel, setConfidenceLevel] =
     useState<ConfidenceLevel | null>(null);
 
-  // Ref for FlatList navigation
   const flatListRef = useRef<FlashcardCardFlatListRef>(null);
   const ratingLockRef = useRef(false);
 
-  // Minimal entrance animations for confidence and rating (Step 5)
   const confidenceOpacity = useRef(new Animated.Value(0)).current;
   const confidenceTranslateY = useRef(new Animated.Value(12)).current;
   const ratingOpacity = useRef(new Animated.Value(0)).current;
@@ -129,12 +127,14 @@ const FlashcardStudy: React.FC<FlashcardStudyProps> = ({
         try {
           flatListRef.current?.scrollToNext();
         } finally {
-          onNext();
           ratingLockRef.current = false;
         }
       }, ADVANCE_DELAY_MS);
     } else {
-      ratingLockRef.current = false;
+      setTimeout(() => {
+        onNext();
+        ratingLockRef.current = false;
+      }, ADVANCE_DELAY_MS);
     }
   };
 
@@ -156,7 +156,6 @@ const FlashcardStudy: React.FC<FlashcardStudyProps> = ({
     onPrevious();
   };
 
-  // Step 2: always show front-first on any index change from parent (swipe or header)
   useEffect(() => {
     setIsFlipped(false);
     setShowConfidence(false);
@@ -177,8 +176,10 @@ const FlashcardStudy: React.FC<FlashcardStudyProps> = ({
 
       <View className="bg-greyBackground rounded-full h-1.5 mb-8 mx-4 mt-2">
         <View
-          className="bg-primary rounded-full h-1.5"
-          style={{ width: `${((currentIndex + 1) / totalCards) * 100}%` }}
+          className="rounded-full h-1.5 bg-primary"
+          style={{
+            width: `${((currentIndex + 1) / totalCards) * 100}%`,
+          }}
         />
       </View>
 

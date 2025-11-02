@@ -5,7 +5,13 @@ export class PromptBuilder {
     description: string,
     options: QuizOptions
   ): string {
-    const { difficulty, questionTypes, numberOfQuestions, user } = options;
+    const {
+      difficulty,
+      questionTypes,
+      numberOfQuestions,
+      user,
+      examType = "general",
+    } = options;
     const { age, grade, gender } = user;
 
     const distribution = this.calculateQuestionDistribution(
@@ -13,27 +19,31 @@ export class PromptBuilder {
       questionTypes
     );
 
-    return `Create a comprehensive EXAM PREPARATION quiz about "${description}" designed to help a ${age}-year-old ${gender} student in ${grade} grade ACE their upcoming exams.
+    const examContext = this.getExamTypeContext(examType);
+
+    return `Analyze the following study material/content and create a comprehensive ${
+      examContext.title
+    } quiz designed to help a ${age}-year-old ${gender} student in ${grade} grade ACE their upcoming ${
+      examContext.examName
+    }.
+
+STUDY MATERIAL/CONTENT TO ANALYZE:
+${description}
+
+🎯 IMPORTANT: Generate a concise, descriptive title (max 60 characters) that accurately reflects the MAIN TOPIC/CONCEPT from the actual content above. The title should be based on analyzing the content, not just copying user instructions.
 
 Please respond with a valid JSON object containing the quiz questions.
 
-🎯 EXAM PREPARATION FOCUS:
+${examContext.instructions}
+
+📚 QUIZ CONFIGURATION:
 - Difficulty Level: ${difficulty.toUpperCase()} (matching exam standards)
 - Total Questions: ${numberOfQuestions}
 - Target Audience: ${age}-year-old ${gender} in ${grade} grade
-- Question Types: ${questionTypes.join(", ").toUpperCase()}
-- Purpose: PRACTICE FOR UPCOMING EXAMS
+- Question Types Selected: ${questionTypes.join(", ").toUpperCase()}
 
 📚 QUESTION DISTRIBUTION:
 ${this.formatQuestionDistribution(distribution)}
-
-🎓 EXAM SUCCESS STRATEGY:
-- Create questions that mirror ACTUAL EXAM PATTERNS and formats
-- Focus on HIGH-YIELD topics that are commonly tested
-- Include questions that test both RECALL and APPLICATION
-- Use EXAM-LIKE language and terminology
-- Cover CRITICAL CONCEPTS that students must master
-- Include questions that help identify KNOWLEDGE GAPS
 
 🚨🚨🚨 CRITICAL INSTRUCTION - READ CAREFULLY 🚨🚨🚨
 ONLY GENERATE THE EXACT QUESTION TYPES LISTED IN THE DISTRIBUTION ABOVE!
@@ -85,7 +95,7 @@ FOLLOW THE DISTRIBUTION EXACTLY - NO EXCEPTIONS!
 📋 RESPONSE FORMAT:
 Return a JSON object with this EXACT structure:
 {
-  "title": "[Topic Name]",
+  "title": "[AI-Generated Topic Title]",
   "questions": [
     {
       "question": "Question text here?",
@@ -96,7 +106,13 @@ Return a JSON object with this EXACT structure:
   ]
 }
 
-IMPORTANT: Replace [Topic Name] with the actual topic from the description.
+🎯 TITLE GENERATION RULES:
+- Analyze the STUDY MATERIAL/CONTENT provided above
+- Extract the MAIN TOPIC, CONCEPT, or SUBJECT from the actual content
+- Generate a concise, descriptive title (max 60 characters) that accurately represents the content
+- DO NOT simply copy user instructions - ANALYZE the content to determine the true topic
+- The title should be specific and informative (e.g., "Photosynthesis Process" not "Biology Quiz")
+- Base the title on the actual study material, not assumptions
 
 🎯 EXAM SUCCESS MISSION:
 Generate ${numberOfQuestions} questions that will help this student:
@@ -144,6 +160,111 @@ Make every question count towards their exam success!
         return "Fill-in-the-blank Questions";
       default:
         return `${type} Questions`;
+    }
+  }
+
+  private static getExamTypeContext(examType: string): {
+    title: string;
+    examName: string;
+    instructions: string;
+  } {
+    switch (examType.toLowerCase()) {
+      case "sat_act":
+        return {
+          title: "SAT/ACT PREPARATION",
+          examName: "SAT/ACT exams",
+          instructions: `🎯 SAT/ACT EXAM PREPARATION FOCUS:
+- Create questions that mirror ACTUAL SAT/ACT question formats and difficulty
+- Focus on HIGH-FREQUENCY topics commonly tested on these standardized exams
+- Use SAT/ACT-style language: clear, concise, and precise
+- Include questions that test CRITICAL READING, REASONING, and PROBLEM-SOLVING skills
+- Emphasize time-efficient questions (students have limited time per question)
+- Cover topics across Math, Reading, Writing, and Science sections
+- Make questions challenging enough to match actual exam rigor
+- Include questions that help students practice STRATEGY and TECHNIQUE`,
+        };
+      case "ap":
+        return {
+          title: "AP EXAM PREPARATION",
+          examName: "AP exam",
+          instructions: `🎯 AP EXAM PREPARATION FOCUS:
+- Create questions that align with AP exam standards and format
+- Focus on CURRICULUM-ALIGNED content from AP course materials
+- Use AP-style terminology and academic language
+- Include questions that test DEPTH OF UNDERSTANDING and APPLICATION
+- Emphasize questions that prepare students for both multiple-choice and free-response sections
+- Cover ESSENTIAL COURSE CONTENT that appears frequently on AP exams
+- Make questions academically rigorous (AP exams are college-level)
+- Include questions that test students' ability to SYNTHESIZE and ANALYZE`,
+        };
+      case "final":
+        return {
+          title: "FINAL EXAM PREPARATION",
+          examName: "final exam",
+          instructions: `🎯 FINAL EXAM PREPARATION FOCUS:
+- Create comprehensive questions that cover ENTIRE SEMESTER/COURSE content
+- Focus on MAJOR CONCEPTS, THEMES, and LEARNING OBJECTIVES from the course
+- Use questions that test cumulative knowledge and understanding
+- Include questions that help students identify COMPREHENSIVE knowledge gaps
+- Emphasize questions that test CONNECTIONS between different topics learned
+- Cover HIGH-WEIGHT topics that typically appear on final exams
+- Make questions challenging but fair, reflecting actual final exam difficulty
+- Include questions that help students PRACTICE under final exam conditions`,
+        };
+      case "midterm":
+        return {
+          title: "MIDTERM EXAM PREPARATION",
+          examName: "midterm exam",
+          instructions: `🎯 MIDTERM EXAM PREPARATION FOCUS:
+- Create questions covering MATERIAL UP TO THE MIDTERM POINT
+- Focus on KEY CONCEPTS and topics from the first half of the course
+- Use questions that test understanding of foundational material
+- Include questions that help students assess their PROGRESS so far
+- Emphasize questions that build CONFIDENCE for the second half of the course
+- Cover IMPORTANT TOPICS that typically appear on midterm exams
+- Make questions appropriately challenging for mid-semester assessment
+- Include questions that help students identify areas needing MORE FOCUS`,
+        };
+      case "chapter":
+        return {
+          title: "CHAPTER REVIEW",
+          examName: "chapter review",
+          instructions: `🎯 CHAPTER REVIEW FOCUS:
+- Create questions that focus on SPECIFIC CHAPTER/CONTENT AREA
+- Focus on KEY CONCEPTS, DEFINITIONS, and EXAMPLES from this chapter
+- Use questions that reinforce chapter-specific learning objectives
+- Include questions that help students MASTER the chapter content
+- Emphasize questions that test understanding of chapter material in detail
+- Cover IMPORTANT TOPICS from this specific chapter or unit
+- Make questions appropriate for chapter-level assessment
+- Include questions that help students identify what they've LEARNED vs what needs REVIEW`,
+        };
+      case "custom":
+        return {
+          title: "CUSTOM EXAM PREPARATION",
+          examName: "custom exam",
+          instructions: `🎯 CUSTOM EXAM PREPARATION FOCUS:
+- Create questions tailored to the student's SPECIFIC LEARNING NEEDS
+- Focus on areas the student wants to practice or improve
+- Use questions that address the student's PARTICULAR CONCERNS or GOALS
+- Include questions that help students ACHIEVE their specific learning objectives
+- Emphasize questions that are RELEVANT to the student's unique situation
+- Cover topics that are MOST IMPORTANT for this student's success
+- Make questions that are PERSONALIZED to the student's learning path
+- Include questions that help students address their SPECIFIC CHALLENGES`,
+        };
+      default:
+        return {
+          title: "EXAM PREPARATION",
+          examName: "upcoming exams",
+          instructions: `🎯 EXAM PREPARATION FOCUS:
+- Create questions that mirror ACTUAL EXAM PATTERNS and formats
+- Focus on HIGH-YIELD topics that are commonly tested
+- Include questions that test both RECALL and APPLICATION
+- Use EXAM-LIKE language and terminology
+- Cover CRITICAL CONCEPTS that students must master
+- Include questions that help identify KNOWLEDGE GAPS`,
+        };
     }
   }
 }
