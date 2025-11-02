@@ -95,7 +95,10 @@ const QuizResults: React.FC<QuizResultsProps> = ({
 
   return (
     <View className="flex-1 bg-background py-safe px-4">
-      <TouchableOpacity className="absolute top-10 right-6" onPress={onClose}>
+      <TouchableOpacity
+        className="absolute top-10 right-6 mt-4"
+        onPress={onClose}
+      >
         <Ionicons name="close" size={24} color={colors.textPrimary} />
       </TouchableOpacity>
       <View className="flex-1 justify-center items-center p-6">

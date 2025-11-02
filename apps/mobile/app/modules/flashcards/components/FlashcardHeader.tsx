@@ -33,7 +33,7 @@ const FlashcardHeader: React.FC<FlashcardHeaderProps> = ({
       >
         <Ionicons
           name="chevron-back"
-          size={18}
+          size={24}
           color={isFirst ? colors.textSecondary : colors.textPrimary}
         />
         <Text
@@ -70,7 +70,7 @@ const FlashcardHeader: React.FC<FlashcardHeaderProps> = ({
         </Text>
         <Ionicons
           name="chevron-forward"
-          size={18}
+          size={24}
           color={isLast ? colors.textSecondary : colors.textPrimary}
         />
       </TouchableOpacity>

@@ -1,5 +1,6 @@
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
-import React from "react";
+import { clsx } from "clsx";
+import React, { useState } from "react";
 import { Platform, Text, TextInputProps, View } from "react-native";
 import colors from "../constants/colors";
 
@@ -21,40 +22,60 @@ export const BottomSheetInput: React.FC<BottomSheetInputProps> = ({
   leftComponent,
   rightComponent,
   borderColor,
+  onFocus,
+  onBlur,
   ...props
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
+
+  const handleFocus = (e: any) => {
+    setIsFocused(true);
+    onFocus?.(e);
+  };
+
+  const handleBlur = (e: any) => {
+    setIsFocused(false);
+    onBlur?.(e);
+  };
+
   return (
-    <View className={` ${containerClassName}`}>
+    <View className={clsx(containerClassName)}>
       <View
-        className={`flex-row items-center px-4 rounded-lg bg-white min-h-12 ${
-          error ? "border border-red" : borderColor ? "border" : ""
-        }`}
+        className={clsx(
+          "px-4 rounded-lg bg-white border min-h-12",
+          props.multiline ? "items-start pt-1" : "flex-row items-center",
+          error && "border-red",
+          !error && isFocused && "border-primary",
+          !error && !isFocused && !borderColor && "border-borderColor"
+        )}
         style={
-          borderColor && !error
-            ? { borderColor: borderColor, borderWidth: 2 }
+          borderColor && !error && !isFocused
+            ? { borderColor: borderColor, borderWidth: 1 }
             : undefined
         }
       >
         {leftComponent && <View className="mr-2">{leftComponent}</View>}
 
         <BottomSheetTextInput
-          className={`
-            flex-1
-            font-sfPro text-base text-text
-            ${inputClassName}
-          `}
+          className={clsx(
+            "flex-1 font-sfPro text-base text-text",
+            inputClassName
+          )}
           placeholderTextColor={colors.textSecondary}
-          style={
+          style={[
             Platform.OS === "android"
               ? {
-                  textAlignVertical: "center",
+                  textAlignVertical: props.multiline ? "top" : "center",
                   includeFontPadding: false,
-                  paddingVertical: 0,
+                  paddingVertical: props.multiline ? 0 : 0,
                 }
               : {
-                  lineHeight: 0,
-                }
-          }
+                  lineHeight: props.multiline ? undefined : 0,
+                },
+            props.style,
+          ]}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           {...props}
         />
 

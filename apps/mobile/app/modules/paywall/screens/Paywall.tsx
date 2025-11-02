@@ -28,32 +28,31 @@ const Paywall: React.FC = () => {
 
   const features = [
     {
-      icon: <Ionicons name="infinite" size={40} color={colors.primary} />,
-      title: "Unlimited Quiz Generation",
-      description: "Create as many quizzes as you want.",
-    },
-    {
       icon: (
         <MaterialCommunityIcons name="robot" size={40} color={colors.primary} />
       ),
-      title: "AI-Powered Questions",
-      description: "Smart questions from your study materials.",
+      title: "AI Powered Answers",
+      description: "Get instant explanations to boost your exam performance.",
+    },
+    {
+      icon: <Ionicons name="library" size={40} color={colors.primary} />,
+      title: "Unlimited Flashcards",
+      description:
+        "Master every concept with spaced repetition for better retention.",
     },
     {
       icon: (
-        <MaterialCommunityIcons
-          name="file-upload"
-          size={40}
-          color={colors.primary}
-        />
+        <Ionicons name="checkbox-outline" size={40} color={colors.primary} />
       ),
-      title: "File Upload Support",
-      description: "Upload PDFs and images for quizzes.",
+      title: "Unlimited Quizzes",
+      description:
+        "Practice unlimited questions to ace your exams with confidence.",
     },
     {
-      icon: <Ionicons name="analytics" size={40} color={colors.primary} />,
-      title: "Quiz Analytics & History",
-      description: "Track progress and review past performance.",
+      icon: <Ionicons name="layers" size={40} color={colors.primary} />,
+      title: "Unlimited Study Sets",
+      description:
+        "Build comprehensive study materials tailored to your course and exam style.",
     },
   ];
 
@@ -114,7 +113,7 @@ const Paywall: React.FC = () => {
       showsVerticalScrollIndicator={false}
       contentContainerClassName="py-safe px-4 bg-background flex-grow"
     >
-      <View className="flex-row items-center justify-between mt-3">
+      <View className="flex-row items-center justify-between mt-2">
         <View className="w-10" />
         <View className="flex-row items-center">
           <Text className="text-textPrimary text-4xl font-nunito-bold mr-2">

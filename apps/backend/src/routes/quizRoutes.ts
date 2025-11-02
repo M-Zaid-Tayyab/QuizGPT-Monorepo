@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import {
+  explainAnswer,
   generateCustomQuiz,
   getQuizHistory,
   submitQuizResult,
@@ -66,5 +67,6 @@ router.post(
 );
 router.post("/submit", protectUnified, submitQuizResult);
 router.get("/history", protectUnified, getQuizHistory);
+router.post("/explain-answer", protectUnified, explainAnswer);
 
 export default router;

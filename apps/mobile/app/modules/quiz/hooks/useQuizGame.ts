@@ -259,11 +259,7 @@ export const useQuizGame = () => {
   ]);
 
   const handleGoHome = useCallback(() => {
-    if (isHistory) {
-      (navigation as any).navigate("Main", { screen: "History" });
-    } else {
-      (navigation as any).navigate("Main", { screen: "Home" });
-    }
+    (navigation as any).navigate("Main");
   }, [isHistory, navigation]);
 
   const handleReport = useCallback(

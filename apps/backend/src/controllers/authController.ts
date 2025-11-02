@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { uploadToCloudinary } from "../helpers/uploadHelper";
 import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
-import AnonymousUser from "../models/anonymousUserModel";
 import Quiz from "../models/quizModel";
 import { default as userModel } from "../models/userModel";
 dotenv.config();
@@ -81,64 +80,6 @@ export const socialLogin = async (
   }
 };
 
-export const createAnonymousUser = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const {
-      uuid,
-      biggestChallenge,
-      studyMethod,
-      examConfidence,
-      studyMaterials,
-      age,
-      strugglingSubjects,
-      studyNeeds,
-      grade,
-      difficulty,
-      gender,
-      referral,
-      isProUser = false,
-    } = req.body;
-
-    if (!uuid) {
-      res.status(400).json({ message: "UUID is required" });
-      return;
-    }
-
-    const existingUser = await AnonymousUser.findById(uuid);
-    if (existingUser) {
-      res.status(400).json({ message: "UUID already registered" });
-      return;
-    }
-
-    const user = await AnonymousUser.create({
-      _id: uuid,
-      biggestChallenge,
-      studyMethod,
-      examConfidence,
-      studyMaterials,
-      age,
-      strugglingSubjects,
-      studyNeeds,
-      grade,
-      difficulty,
-      gender,
-      referral,
-      isProUser,
-    });
-
-    const token = jwt.sign({ uuid: user._id }, process.env.JWT_SECRET!, {
-      expiresIn: "100000d",
-    });
-
-    res.status(201).json({ user, token });
-  } catch (error) {
-    console.error("Error creating anonymous user:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
 
 function hasStreakGap(lastQuizDate: Date | null): boolean {
   if (!lastQuizDate) return false;
@@ -156,8 +97,6 @@ export const getUserDetails = async (
   res: Response
 ): Promise<void> => {
   try {
-    const userId = req.user._id;
-    const userType = req.userType;
     const user = req.user;
 
     if (!user) {
@@ -180,8 +119,6 @@ export const getUserDetails = async (
 
     res.status(200).json({
       user: user,
-      userType: userType,
-      quizLimit: userType === "anonymous" ? 1 : undefined,
     });
   } catch (error) {
     console.error("Error getting user stats:", error);
@@ -195,7 +132,6 @@ export const updateUser = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const user = req.user;
     const file = req.file;
 
@@ -215,22 +151,16 @@ export const updateUser = async (
       }
     });
 
-    if (file && userType === "user") {
+    if (file) {
       const newImageUrl = await uploadToCloudinary(file.buffer);
       filteredUpdateData.image = newImageUrl;
     }
 
-    if (userType === "anonymous") {
-      Object.assign(user, filteredUpdateData);
-      await user.save();
-    } else {
       await userModel.findByIdAndUpdate(userId, filteredUpdateData);
-    }
 
     res.status(200).json({
       message: "User updated successfully",
       updatedFields: Object.keys(filteredUpdateData),
-      userType: userType,
     });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -244,22 +174,13 @@ export const deleteUser = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
 
     await Quiz.deleteMany({ createdBy: userId });
 
-    if (userType === "anonymous") {
-      const deletedUser = await AnonymousUser.findByIdAndDelete(userId);
-      if (!deletedUser) {
-        res.status(404).json({ message: "User not found" });
-        return;
-      }
-    } else {
       const deletedUser = await userModel.findByIdAndDelete(userId);
       if (!deletedUser) {
         res.status(404).json({ message: "User not found" });
         return;
-      }
     }
 
     res.status(200).json({ message: "User deleted successfully" });

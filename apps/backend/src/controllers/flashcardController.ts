@@ -9,19 +9,16 @@ import {
   SpacedRepetitionService,
 } from "../helpers/spacedRepetitionService";
 import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
-import AnonymousUser from "../models/anonymousUserModel";
 import Deck from "../models/deckModel";
 import Flashcard from "../models/flashcardModel";
 import userModel from "../models/userModel";
 
-// Unified function that works with both user types
 export const generateFlashcards = async (
   req: UnifiedAuthRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const user = req.user;
 
     if (!user) {
@@ -29,12 +26,18 @@ export const generateFlashcards = async (
       return;
     }
 
-    const {
-      text,
-      category = "General",
-      count = 10,
-      difficulty = user.difficulty || "Medium",
-    } = req.body;
+    let { text, category, count = 10, difficulty } = req.body;
+    // Normalize inputs to satisfy schema requirements
+    category = (category && category.trim()) || "General";
+    const difficultyMap: Record<string, string> = {
+      easy: "Easy",
+      Easy: "Easy",
+      medium: "Medium",
+      Medium: "Medium",
+      hard: "Hard",
+      Hard: "Hard",
+    };
+    difficulty = difficultyMap[difficulty] || user.difficulty || "Medium";
 
     if (!text || text.trim().length === 0) {
       res.status(400).json({ message: "Text content is required" });
@@ -74,7 +77,6 @@ export const generateFlashcards = async (
         Flashcard.create({
           ...flashcardData,
           createdBy: userId, // Works for both ObjectId and String UUID
-          userType: userType, // "user" or "anonymous"
           sourceMaterial: text,
           generatedFrom: "text",
         })
@@ -87,30 +89,20 @@ export const generateFlashcards = async (
       name: deckMeta.name,
       description: deckMeta.description,
       flashcards: savedFlashcards.map((f) => f._id),
-      createdBy: userId, // Works for both ObjectId and String UUID
-      userType: userType, // "user" or "anonymous"
+      createdBy: userId,
       category,
       difficulty,
       sourceMaterial: text,
       generatedFrom: "text",
     });
 
-    // Update user statistics (works for both User and AnonymousUser)
-    if (userType === "user") {
+    // Update user statistics
       await userModel.findByIdAndUpdate(userId, {
         $inc: {
           "statistics.totalFlashcards": savedFlashcards.length,
           "statistics.totalDecks": 1,
         },
       });
-    } else {
-      await AnonymousUser.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalFlashcards": savedFlashcards.length,
-          "statistics.totalDecks": 1,
-        },
-      });
-    }
 
     res.status(201).json({
       message: "Flashcards generated successfully",
@@ -130,7 +122,6 @@ export const generateFlashcardsFromFile = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const user = req.user;
 
     if (!user) {
@@ -151,8 +142,20 @@ export const generateFlashcardsFromFile = async (
       return;
     }
 
+    // Map frontend difficulty values to backend enum values
+    const difficultyMap: Record<string, string> = {
+      easy: "Easy",
+      Easy: "Easy",
+      medium: "Medium",
+      Medium: "Medium",
+      hard: "Hard",
+      Hard: "Hard",
+    };
+    const difficulty =
+      difficultyMap[requestData.difficulty] || user.difficulty || "Medium";
+
     const options: FlashcardOptions = {
-      difficulty: requestData.difficulty || user.difficulty || "Medium",
+      difficulty,
       category: requestData.topic || "General",
       count: requestData.numberOfQuestions || 10,
       user: {
@@ -179,7 +182,6 @@ export const generateFlashcardsFromFile = async (
         Flashcard.create({
           ...flashcardData,
           createdBy: userId,
-          userType: userType,
           sourceMaterial: text,
           generatedFrom: requestData.file ? "pdf" : "text",
         })
@@ -193,29 +195,19 @@ export const generateFlashcardsFromFile = async (
       description: deckMeta.description,
       flashcards: savedFlashcards.map((f) => f._id),
       createdBy: userId,
-      userType: userType,
       category: options.category,
       difficulty: options.difficulty,
       sourceMaterial: text,
       generatedFrom: requestData.file ? "pdf" : "text",
     });
 
-    // Update user statistics (works for both User and AnonymousUser)
-    if (userType === "user") {
+    // Update user statistics
       await userModel.findByIdAndUpdate(userId, {
         $inc: {
           "statistics.totalFlashcards": savedFlashcards.length,
           "statistics.totalDecks": 1,
         },
       });
-    } else {
-      await AnonymousUser.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalFlashcards": savedFlashcards.length,
-          "statistics.totalDecks": 1,
-        },
-      });
-    }
 
     res.status(201).json({
       message: "Flashcards generated successfully",
@@ -235,7 +227,6 @@ export const generateFlashcardsFromQuiz = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const user = req.user;
 
     // Get the quiz (you'll need to implement this based on your quiz model)
@@ -262,7 +253,6 @@ export const generateFlashcardsFromQuiz = async (
         Flashcard.create({
           ...flashcardData,
           createdBy: userId,
-          userType: userType,
           sourceMaterial: quiz.description || "Quiz",
           generatedFrom: "quiz",
         })
@@ -275,29 +265,19 @@ export const generateFlashcardsFromQuiz = async (
       description: `Flashcards generated from quiz: ${quiz.title}`,
       flashcards: savedFlashcards.map((f) => f._id),
       createdBy: userId,
-      userType: userType,
       category: quiz.title,
       difficulty: "Medium",
       sourceMaterial: quiz.description || "Quiz",
       generatedFrom: "quiz",
     });
 
-    // Update user statistics (works for both User and AnonymousUser)
-    if (userType === "user") {
+    // Update user statistics
       await userModel.findByIdAndUpdate(userId, {
         $inc: {
           "statistics.totalFlashcards": savedFlashcards.length,
           "statistics.totalDecks": 1,
         },
       });
-    } else {
-      await AnonymousUser.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalFlashcards": savedFlashcards.length,
-          "statistics.totalDecks": 1,
-        },
-      });
-    }
 
     res.status(201).json({
       message: "Flashcards generated successfully",
@@ -317,12 +297,10 @@ export const getUserDecks = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const { page = 1, limit = 20, category, difficulty } = req.query;
 
     const query: any = {
       createdBy: userId,
-      userType: userType,
     };
 
     if (category) {
@@ -362,7 +340,6 @@ export const createDeck = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const { name, description, category, difficulty, color } = req.body;
 
     if (!name || name.trim().length === 0) {
@@ -374,22 +351,15 @@ export const createDeck = async (
       name: name.trim(),
       description: description?.trim() || "",
       createdBy: userId,
-      userType: userType,
       category: category || "General",
       difficulty: difficulty || "Medium",
       color: color || "#FF6B6B",
     });
 
-    // Update user statistics (works for both User and AnonymousUser)
-    if (userType === "user") {
+    // Update user statistics
       await userModel.findByIdAndUpdate(userId, {
         $inc: { "statistics.totalDecks": 1 },
       });
-    } else {
-      await AnonymousUser.findByIdAndUpdate(userId, {
-        $inc: { "statistics.totalDecks": 1 },
-      });
-    }
 
     res.status(201).json({
       message: "Deck created successfully",
@@ -407,13 +377,11 @@ export const getDeckFlashcards = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const { deckId } = req.params;
 
     const deck = await Deck.findOne({
       _id: deckId,
       createdBy: userId,
-      userType: userType,
     }).populate("flashcards");
 
     if (!deck) {
@@ -438,7 +406,6 @@ export const getCardsForReview = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const { limit = 20, deckId } = req.query;
 
     let cards;
@@ -447,7 +414,6 @@ export const getCardsForReview = async (
       const deck = await Deck.findOne({
         _id: deckId,
         createdBy: userId,
-        userType: userType,
       }).populate("flashcards");
 
       if (!deck) {
@@ -461,7 +427,6 @@ export const getCardsForReview = async (
       // Get all cards due for review
       cards = await SpacedRepetitionService.getCardsForReview(
         userId,
-        "anonymous",
         Number(limit)
       );
     }
@@ -482,7 +447,6 @@ export const submitReview = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
     const { flashcardId } = req.params;
     const {
       response,
@@ -508,16 +472,10 @@ export const submitReview = async (
       return;
     }
 
-    // Update user statistics (works for both User and AnonymousUser)
-    if (userType === "user") {
+    // Update user statistics
       await userModel.findByIdAndUpdate(userId, {
         $inc: { "statistics.totalStudySessions": 1 },
       });
-    } else {
-      await AnonymousUser.findByIdAndUpdate(userId, {
-        $inc: { "statistics.totalStudySessions": 1 },
-      });
-    }
 
     res.status(200).json({
       message: "Review submitted successfully",
@@ -535,11 +493,9 @@ export const getStudyProgress = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const userType = req.userType;
 
     const statistics = await SpacedRepetitionService.getStudyStatistics(
-      userId,
-      userType
+      userId
     );
 
     res.status(200).json({

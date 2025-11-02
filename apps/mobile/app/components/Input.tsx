@@ -3,19 +3,20 @@ import React, { useState } from "react";
 import {
   ImageStyle,
   KeyboardTypeOptions,
+  NativeSyntheticEvent,
   Platform,
   Pressable,
   StyleProp,
-  StyleSheet,
   Text,
   TextInput,
+  TextInputFocusEventData,
   TextStyle,
   View,
   ViewStyle,
 } from "react-native";
 
 import { icn } from "@/assets/icn";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import colors from "../../app/constants/colors";
 
 export interface InputProps {
@@ -74,8 +75,8 @@ const Input: React.FC<InputProps> = ({
   borderLess,
   placeholderTextColor,
   onFocus,
-  className,
-  inputClassName,
+  className = "",
+  inputClassName = "",
   autoFocus,
   leftIcon,
 }) => {
@@ -83,68 +84,26 @@ const Input: React.FC<InputProps> = ({
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const togglePassword = () => setIsPasswordVisible((prev) => !prev);
-  const containerStyle: StyleProp<ViewStyle> = [
-    typeof width === "number" ? { width } : {},
-    style,
-  ];
 
-  return (
-    <View
-      className={`flex-row items-center border rounded-lg px-3 py-2 bg-white ${
-        multiline ? "min-h-12" : "h-12"
-      }
-        ${className} ${
-        error
-          ? "border-red-500"
-          : isFocused
-          ? "border-primary"
-          : "border-borderColor"
-      } ${borderLess ? "border-0" : ""}`}
-      style={containerStyle}
-      onLayout={onLayout}
-    >
-      {leftIcon && leftIcon()}
-      <TextInput
-        className={clsx(
-          "flex-1 text-base text-textPrimary font-nunito py-0 h-full",
-          inputClassName
-        )}
-        style={[
-          Platform.OS === "android"
-            ? {
-                textAlignVertical: "center",
-                includeFontPadding: false,
-                paddingVertical: 0,
-              }
-            : {
-                lineHeight: 0,
-              },
-          inputStyle,
-        ]}
-        onChangeText={onChangeText}
-        value={value}
-        multiline={multiline}
-        placeholder={placeholder}
-        placeholderTextColor={placeholderTextColor || colors.textSecondary}
-        cursorColor={colors.textPrimary}
-        onFocus={() => {
-          if (!disabled) {
-            setIsFocused(true);
-            onFocus && onFocus();
-          }
-        }}
-        onBlur={() => {
-          setIsFocused(false);
-          onBlur && onBlur();
-        }}
-        maxLength={numberOfCharacter}
-        keyboardType={keyboardType}
-        autoCapitalize="none"
-        autoCorrect={false}
-        editable={!disabled}
-        secureTextEntry={type === "password" && !isPasswordVisible}
-        autoFocus={autoFocus}
-      />
+  const handleFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    if (!disabled) {
+      setIsFocused(true);
+      onFocus?.();
+    }
+  };
+
+  const handleBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    setIsFocused(false);
+    onBlur?.();
+  };
+
+  // Determine error state (support both error boolean and errorMessage string)
+  const hasError = error || (errorMessage && errorMessage.length > 0);
+  const errorText = typeof errorMessage === "string" ? errorMessage : undefined;
+
+  // Build right component - password toggle, rightIcon, or rightButton
+  const rightComponent = (
+    <>
       {type === "password" && (
         <Pressable onPress={togglePassword} className="ml-2">
           <Image
@@ -162,16 +121,80 @@ const Input: React.FC<InputProps> = ({
           contentFit="contain"
         />
       )}
-      {rightButton ? rightButton() ?? null : null}
-      {error && errorMessage && (
-        <Text className="text-xs text-red-500 absolute left-0 -bottom-5 ml-1">
-          {errorMessage}
-        </Text>
+      {rightButton && rightButton()}
+    </>
+  );
+
+  // Build left component
+  const leftComponent = leftIcon ? (
+    <View className="mr-2">{leftIcon()}</View>
+  ) : null;
+
+  const containerStyle: StyleProp<ViewStyle> = [
+    typeof width === "number" ? { width } : {},
+    style,
+  ];
+
+  return (
+    <View
+      className={clsx(className)}
+      style={containerStyle}
+      onLayout={onLayout}
+    >
+      <View
+        className={clsx(
+          "px-4 rounded-lg bg-white border min-h-12",
+          multiline ? "items-start pt-1" : "flex-row items-center",
+          !borderLess && hasError && "border-red",
+          !borderLess && !hasError && isFocused && "border-primary",
+          !borderLess && !hasError && !isFocused && "border-borderColor",
+          borderLess && "border-0"
+        )}
+      >
+        {leftComponent}
+
+        <TextInput
+          className={clsx(
+            "flex-1 font-nunito text-base text-textPrimary",
+            inputClassName
+          )}
+          placeholderTextColor={placeholderTextColor || colors.textSecondary}
+          cursorColor={colors.textPrimary}
+          style={[
+            Platform.OS === "android"
+              ? {
+                  textAlignVertical: multiline ? "top" : "center",
+                  includeFontPadding: false,
+                  paddingVertical: multiline ? 0 : 0,
+                }
+              : {
+                  lineHeight: multiline ? undefined : 0,
+                },
+            inputStyle,
+          ]}
+          onChangeText={onChangeText}
+          value={value}
+          multiline={multiline}
+          placeholder={placeholder}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          maxLength={numberOfCharacter}
+          keyboardType={keyboardType}
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!disabled}
+          secureTextEntry={type === "password" && !isPasswordVisible}
+          autoFocus={autoFocus}
+        />
+
+        {rightComponent}
+      </View>
+
+      {hasError && errorText && (
+        <Text className="mt-1 text-red font-nunito">{errorText}</Text>
       )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({});
 
 export default Input;

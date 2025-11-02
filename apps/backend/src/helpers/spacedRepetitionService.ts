@@ -74,14 +74,12 @@ export class SpacedRepetitionService {
    */
   static async getCardsForReview(
     userId: string,
-    userType: "user" | "anonymous" = "anonymous",
     limit: number = 20
   ): Promise<any[]> {
     const now = new Date();
 
     return await Flashcard.find({
       createdBy: userId,
-      userType,
       nextReview: { $lte: now },
     })
       .limit(limit)
@@ -94,12 +92,10 @@ export class SpacedRepetitionService {
    */
   static async getAllUserCards(
     userId: string,
-    userType: "user" | "anonymous" = "anonymous",
     deckId?: string
   ): Promise<any[]> {
     const query: any = {
       createdBy: userId,
-      userType,
     };
 
     if (deckId) {
@@ -225,8 +221,7 @@ export class SpacedRepetitionService {
    * Get study statistics for a user
    */
   static async getStudyStatistics(
-    userId: string,
-    userType: "user" | "anonymous" = "anonymous"
+    userId: string
   ): Promise<{
     totalCards: number;
     cardsDue: number;
@@ -239,13 +234,12 @@ export class SpacedRepetitionService {
     const now = new Date();
 
     const [totalCards, cardsDue, studyProgress] = await Promise.all([
-      Flashcard.countDocuments({ createdBy: userId, userType }),
+      Flashcard.countDocuments({ createdBy: userId }),
       Flashcard.countDocuments({
         createdBy: userId,
-        userType,
         nextReview: { $lte: now },
       }),
-      StudyProgress.find({ userId, userType }),
+      StudyProgress.find({ userId }),
     ]);
 
     const cardsLearning = studyProgress.filter(

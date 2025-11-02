@@ -47,8 +47,12 @@ const FlashcardFaceFront: React.FC<FlashcardFaceFrontProps> = ({
       </Text>
 
       <View className="items-center">
-        <View className="bg-primary/10 rounded-full p-3 mb-2">
-          <Ionicons name="arrow-down" size={20} color={colors.primary} />
+        <View className="rounded-full p-3 mb-2 bg-primary/10">
+          <Ionicons
+            name="arrow-down"
+            size={20}
+            color={colors.primary}
+          />
         </View>
         <Text className="text-textSecondary font-nunito-medium text-sm text-center">
           Tap to reveal answer

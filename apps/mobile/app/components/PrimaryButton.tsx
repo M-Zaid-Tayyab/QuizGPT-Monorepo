@@ -13,6 +13,7 @@ export interface PrimaryButtonProps {
   disabledWhileAnimating?: boolean;
   className?: string;
   textClassName?: string;
+  style?: any;
 }
 
 const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -25,6 +26,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   disabledWhileAnimating,
   className,
   textClassName,
+  style,
 }) => {
   return (
     <TouchableOpacity
@@ -36,6 +38,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
           "opacity-50": disabled,
         }
       )}
+      style={style}
       onPress={() => {
         if (
           disabled === true ||

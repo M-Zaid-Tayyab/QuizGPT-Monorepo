@@ -67,16 +67,19 @@ export class FlashcardGenerator {
     options: FlashcardOptions
   ): Promise<{ name: string; description: string }> {
     const { category, count } = options;
-    const metaPrompt = `Based on the following study material, generate a concise deck title and a short, relevant description. 
+    const metaPrompt = `Analyze the following study material and generate a concise deck title and a short, relevant description based on the ACTUAL CONTENT.
 
 REQUIREMENTS:
 - Title: <= 60 characters, specific to the content (no generic words like "Flashcards" unless useful)
 - Description: 1 sentence, <= 140 characters, clearly states what the deck covers
+- Analyze the content to determine the MAIN TOPIC/SUBJECT, don't just use generic categories
 
-CATEGORY: ${category}
+CATEGORY CONTEXT: ${category} (use as hint, but analyze content to determine actual topic)
 TARGET CARD COUNT: ${count}
 
 STUDY MATERIAL (truncate if long):\n${text.slice(0, 1200)}
+
+🎯 IMPORTANT: Generate the title by ANALYZING the study material content above, not by copying the category. Extract the actual topic/subject from the content.
 
 Return strict JSON with keys: {"name": string, "description": string}`;
 
