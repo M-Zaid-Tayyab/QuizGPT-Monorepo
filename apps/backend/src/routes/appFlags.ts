@@ -9,8 +9,8 @@ router.get("/", (req, res) => {
         showWeeklyCalculation: false,
       },
       version: {
-        minimumVersion: "1.3.0",
-        latestVersion: "1.3.0",
+        minimumVersion: "1.4.0",
+        latestVersion: "1.4.0",
         forceUpdate: false,
       },
     };
