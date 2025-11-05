@@ -39,7 +39,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onStartOnboarding,
 }) => {
   const navigation = useNavigation();
-  const { setUser } = useUserStore();
+  const { setUser, onboardingCompleted } = useUserStore();
   const { socialLoginMutation } = useApis();
   const handleSocialLogin = async (socialData: any) => {
     try {
@@ -54,6 +54,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         ...response.data.user,
         token: response.data.token,
       });
+      onboardingCompleted(!!response.data.user.biggestChallenge);
       if (!response.data.user.biggestChallenge) {
         onStartOnboarding();
       } else if (response.data.user.isProUser) {
