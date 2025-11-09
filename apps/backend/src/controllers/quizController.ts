@@ -89,15 +89,12 @@ export const generateCustomQuiz = async (
         return;
       }
     } else {
-      const {
-        topic,
-        difficulty,
-        questionTypes,
-        numberOfQuestions,
-        examType: examTypeFromBody,
-      } = req.body;
+      const topic = req.body.topic;
+      difficulty = req.body.difficulty;
+      questionTypes = req.body.questionTypes;
+      numberOfQuestions = req.body.numberOfQuestions;
+      examType = req.body.examType || "general";
       description = topic || "";
-      examType = examTypeFromBody || "general";
     }
 
     if (!description || description.trim().length === 0) {
