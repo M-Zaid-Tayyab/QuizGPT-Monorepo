@@ -4,8 +4,11 @@ import React from "react";
 import { Pressable, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
   FadeIn,
-  FadeInRight,
+  FadeInDown,
   FadeOut,
+  FadeOutUp,
+  ZoomIn,
+  ZoomOut,
 } from "react-native-reanimated";
 
 interface FABMenuOption {
@@ -37,7 +40,9 @@ const FABMenu: React.FC<FABMenuProps> = ({ visible, onClose, options }) => {
         className="absolute inset-0 bg-black/50"
         style={{ zIndex: 999 }}
       >
-        <View
+        <Animated.View
+          entering={ZoomIn.duration(200).springify().damping(15).stiffness(200)}
+          exiting={ZoomOut.duration(0)}
           style={{
             position: "absolute",
             right: 20,
@@ -54,11 +59,12 @@ const FABMenu: React.FC<FABMenuProps> = ({ visible, onClose, options }) => {
           {options.map((option, index) => (
             <Animated.View
               key={option.id}
-              entering={FadeInRight.duration(300)
-                .delay(index * 50)
+              entering={FadeInDown.duration(250)
+                .delay(50 + index * 40)
                 .springify()
                 .damping(15)
                 .stiffness(200)}
+              exiting={FadeOutUp.duration(150)}
             >
               <TouchableOpacity
                 onPress={() => {
@@ -88,7 +94,7 @@ const FABMenu: React.FC<FABMenuProps> = ({ visible, onClose, options }) => {
               </TouchableOpacity>
             </Animated.View>
           ))}
-        </View>
+        </Animated.View>
       </Pressable>
     </Animated.View>
   );

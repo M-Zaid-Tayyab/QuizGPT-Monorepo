@@ -10,13 +10,13 @@ import PrimaryButton from "@/app/components/PrimaryButton";
 import SkeletonPlaceholder from "@/app/components/SkeltonPlaceholder";
 import colors from "@/app/constants/colors";
 import { useUserStore } from "@/app/modules/auth/store/userStore";
+import AnimatedFAB from "@/app/modules/home/components/AnimatedFAB";
 import FABMenu from "@/app/modules/home/components/FABMenu";
 import FlashcardCreateSheetContent from "@/app/modules/home/components/FlashcardCreateSheetContent";
 import QuizCreateSheetContent from "@/app/modules/home/components/QuizCreateSheetContent";
 import SwipeableFeedItem from "@/app/modules/home/components/SwipeableFeedItem";
 import { FeedItem, useHome } from "@/app/modules/home/hooks/useHome";
 import { FlashList } from "@shopify/flash-list";
-import { heightPercentageToDP } from "react-native-responsive-screen";
 
 type NavigationProp = {
   navigate: (screen: string, params?: any) => void;
@@ -141,21 +141,10 @@ const Home: React.FC = () => {
           </View>
         </View>
       )}
-      <TouchableOpacity
+      <AnimatedFAB
+        visible={fabButtonOpacity === 1}
         onPress={handleOpenFABMenu}
-        activeOpacity={0.9}
-        className="p-4 rounded-full bg-primary items-center justify-center absolute right-5 bottom-12 z-10"
-        style={{
-          opacity: fabButtonOpacity,
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
-        }}
-      >
-        <Ionicons name="add" size={38} color={colors.white} />
-      </TouchableOpacity>
+      />
 
       <FABMenu
         visible={isFABMenuOpen}
@@ -166,7 +155,8 @@ const Home: React.FC = () => {
       <BottomSheetModal
         sheetRef={createSheetRef}
         scrollView
-        maxDynamicContentSize={heightPercentageToDP(88)}
+        snapPoints={["90%"]}
+        enableDynamicSizing={false}
         onChange={handleBottomSheetChange}
         onDismiss={handleBottomSheetDismiss}
       >

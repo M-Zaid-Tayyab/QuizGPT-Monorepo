@@ -5,7 +5,8 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useNavigation } from "@react-navigation/native";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Keyboard } from "react-native";
 import ImagePicker from "react-native-image-crop-picker";
 import { useDeleteDeck, useDeleteQuiz } from "./useFeedItemDelete";
 
@@ -130,6 +131,20 @@ export const useHome = () => {
       return dateB - dateA;
     });
   }, [history, decksData]);
+
+  useEffect(() => {
+    const keyboardWillHideListener = Keyboard.addListener(
+      "keyboardWillHide",
+      () => {
+        if (isCreateOpen && createSheetRef.current) {
+          createSheetRef.current?.snapToIndex?.(0);
+        }
+      }
+    );
+    return () => {
+      keyboardWillHideListener.remove();
+    };
+  }, [isCreateOpen]);
 
   const createQuizFormData = (
     file: { uri: string; name: string; type: string },
@@ -318,11 +333,6 @@ export const useHome = () => {
     [deleteQuizMutation, deleteDeckMutation, queryClient]
   );
 
-  const closeMenuAndWait = async () => {
-    setIsFABMenuOpen(false);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-  };
-
   const handleFileSelected = (file: {
     uri: string;
     name: string;
@@ -335,7 +345,7 @@ export const useHome = () => {
 
   const pickFromGallery = useCallback(async () => {
     try {
-      await closeMenuAndWait();
+      setIsFABMenuOpen(false);
 
       const image = await ImagePicker.openPicker({
         width: 2000,
@@ -358,7 +368,7 @@ export const useHome = () => {
 
   const pickCamera = useCallback(async () => {
     try {
-      await closeMenuAndWait();
+      setIsFABMenuOpen(false);
 
       const image = await ImagePicker.openCamera({
         width: 2000,
@@ -381,7 +391,7 @@ export const useHome = () => {
 
   const pickDocument = useCallback(async () => {
     try {
-      await closeMenuAndWait();
+      setIsFABMenuOpen(false);
 
       const result = await DocumentPicker.getDocumentAsync({
         type: ["application/pdf", "image/*"],

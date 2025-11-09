@@ -6,7 +6,7 @@ import {
   BottomSheetModal as GorhomBottomSheetModal,
   type BottomSheetModalProps,
 } from "@gorhom/bottom-sheet";
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useMemo } from "react";
 import { widthPercentageToDP } from "react-native-responsive-screen";
 import colors from "../constants/colors";
 
@@ -22,6 +22,9 @@ type Props = {
   onDismiss?: () => void;
   scrollView?: boolean;
   maxDynamicContentSize?: number;
+  enableDynamicSizing?: boolean;
+  enableContentPanningGesture?: boolean;
+  enableHandlePanningGesture?: boolean;
 };
 
 const BottomSheetModal: React.FC<Props> = ({
@@ -35,9 +38,10 @@ const BottomSheetModal: React.FC<Props> = ({
   onDismiss,
   scrollView = false,
   maxDynamicContentSize,
+  enableDynamicSizing = true,
+  enableContentPanningGesture = true,
+  enableHandlePanningGesture = true,
 }) => {
-  const modalRef = useRef<GorhomBottomSheetModal>(null);
-
   const memoizedSnapPoints = useMemo(() => snapPoints, [snapPoints]);
 
   const renderBackdrop = useCallback(
@@ -59,8 +63,11 @@ const BottomSheetModal: React.FC<Props> = ({
         ref={sheetRef}
         snapPoints={memoizedSnapPoints}
         enablePanDownToClose={enablePanDownToClose}
+        enableContentPanningGesture={enableContentPanningGesture}
+        enableHandlePanningGesture={enableHandlePanningGesture}
         onChange={onChange}
         backdropComponent={renderBackdrop}
+        enableDynamicSizing={enableDynamicSizing}
         maxDynamicContentSize={maxDynamicContentSize}
         onDismiss={onDismiss}
         keyboardBehavior="interactive"
