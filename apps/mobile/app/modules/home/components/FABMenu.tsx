@@ -1,7 +1,12 @@
 import colors from "@/app/constants/colors";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
-import { Modal, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, Text, TouchableOpacity, View } from "react-native";
+import Animated, {
+  FadeIn,
+  FadeInRight,
+  FadeOut,
+} from "react-native-reanimated";
 
 interface FABMenuOption {
   id: string;
@@ -21,20 +26,20 @@ const FABMenu: React.FC<FABMenuProps> = ({ visible, onClose, options }) => {
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
+    <Animated.View
+      entering={FadeIn.duration(200)}
+      exiting={FadeOut.duration(150)}
+      className="absolute inset-0"
+      pointerEvents="box-none"
     >
-      <TouchableOpacity
-        activeOpacity={1}
+      <Pressable
         onPress={onClose}
-        className="flex-1 bg-black/50"
+        className="absolute inset-0 bg-black/50"
+        style={{ zIndex: 999 }}
       >
         <View
-          className="absolute bg-white rounded-2xl overflow-hidden"
           style={{
+            position: "absolute",
             right: 20,
             bottom: 100,
             minWidth: 200,
@@ -44,39 +49,48 @@ const FABMenu: React.FC<FABMenuProps> = ({ visible, onClose, options }) => {
             shadowRadius: 12,
             elevation: 8,
           }}
+          className="bg-white rounded-2xl overflow-hidden"
         >
           {options.map((option, index) => (
-            <TouchableOpacity
+            <Animated.View
               key={option.id}
-              onPress={() => {
-                option.onPress();
-                onClose();
-              }}
-              className="flex-row items-center px-5 py-2"
+              entering={FadeInRight.duration(300)
+                .delay(index * 50)
+                .springify()
+                .damping(15)
+                .stiffness(200)}
             >
-              <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-3">
-                {option.iconType === "material" ? (
-                  <MaterialCommunityIcons
-                    name={option.icon as any}
-                    size={20}
-                    color={colors.primary}
-                  />
-                ) : (
-                  <Ionicons
-                    name={option.icon as any}
-                    size={20}
-                    color={colors.primary}
-                  />
-                )}
-              </View>
-              <Text className="text-textPrimary font-nunito-semibold text-base flex-1">
-                {option.label}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  option.onPress();
+                  onClose();
+                }}
+                className="flex-row items-center px-5 py-3"
+              >
+                <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-3">
+                  {option.iconType === "material" ? (
+                    <MaterialCommunityIcons
+                      name={option.icon as any}
+                      size={20}
+                      color={colors.primary}
+                    />
+                  ) : (
+                    <Ionicons
+                      name={option.icon as any}
+                      size={20}
+                      color={colors.primary}
+                    />
+                  )}
+                </View>
+                <Text className="text-textPrimary font-nunito-semibold text-base flex-1">
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
           ))}
         </View>
-      </TouchableOpacity>
-    </Modal>
+      </Pressable>
+    </Animated.View>
   );
 };
 

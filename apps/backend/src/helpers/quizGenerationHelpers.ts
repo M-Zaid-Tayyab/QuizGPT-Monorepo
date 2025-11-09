@@ -35,7 +35,8 @@ export class InputProcessor {
     if (req.file) {
       // Safely handle optional fields from multipart forms
       const topic = req.body?.topic || "General";
-      const difficulty = req.body?.difficulty || req.user?.difficulty || "Medium";
+      const difficulty =
+        req.body?.difficulty || req.user?.difficulty || "Medium";
       let questionTypes: string[] = ["mcq", "true_false", "fill_blank"];
       const rawQuestionTypes = req.body?.questionTypes;
       if (rawQuestionTypes) {
@@ -113,4 +114,3 @@ export class InputProcessor {
     return topic;
   }
 }
-

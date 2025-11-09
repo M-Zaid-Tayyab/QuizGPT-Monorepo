@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import {
   createDeck,
+  deleteDeck,
   generateFlashcards,
   generateFlashcardsFromFile,
   generateFlashcardsFromQuiz,
@@ -49,6 +50,7 @@ router.post("/generate-from-quiz", generateFlashcardsFromQuiz);
 router.get("/decks", getUserDecks);
 router.post("/decks", createDeck);
 router.get("/decks/:deckId/flashcards", getDeckFlashcards);
+router.delete("/decks/:deckId", deleteDeck);
 
 router.get("/review", getCardsForReview);
 router.post("/review/:flashcardId", submitReview);

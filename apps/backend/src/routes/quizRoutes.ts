@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import {
+  deleteQuiz,
   explainAnswer,
   generateCustomQuiz,
   getQuizHistory,
@@ -68,5 +69,6 @@ router.post(
 router.post("/submit", protectUnified, submitQuizResult);
 router.get("/history", protectUnified, getQuizHistory);
 router.post("/explain-answer", protectUnified, explainAnswer);
+router.delete("/:quizId", protectUnified, deleteQuiz);
 
 export default router;

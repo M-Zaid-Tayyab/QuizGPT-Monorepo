@@ -43,7 +43,7 @@ export const generateCustomQuiz = async (
       examType;
 
     if (req.file) {
-      userInstructions = req.body.topic || req.body.instructions || ""; // Optional user instructions
+      userInstructions = req.body.topic || req.body.instructions || "";
       difficulty = req.body.difficulty;
       questionTypes = JSON.parse(req.body.questionTypes);
       numberOfQuestions = parseInt(req.body.numberOfQuestions, 10);
@@ -78,7 +78,6 @@ export const generateCustomQuiz = async (
           fileText = fileText.substring(0, 2000) + "...";
         }
 
-        // Use file content as primary, user instructions as optional context
         description = userInstructions
           ? `${userInstructions}\n\nStudy Material:\n${fileText}`
           : fileText;
@@ -90,9 +89,13 @@ export const generateCustomQuiz = async (
         return;
       }
     } else {
-      const { topic, difficulty, questionTypes, numberOfQuestions, examType: examTypeFromBody } =
-        req.body;
-      // For text-only, the user input IS the content to analyze
+      const {
+        topic,
+        difficulty,
+        questionTypes,
+        numberOfQuestions,
+        examType: examTypeFromBody,
+      } = req.body;
       description = topic || "";
       examType = examTypeFromBody || "general";
     }
@@ -197,10 +200,8 @@ export const submitQuizResult = async (
         question.userTextAnswer = q.userTextAnswer;
       }
 
-      // Check if answer is correct based on question type
       let isCorrect = false;
       if (question.questionType === "fill_blank") {
-        // For fill-in-the-blank, compare the actual text content
         const normalizeText = (text: string) =>
           text
             .toLowerCase()
@@ -211,7 +212,6 @@ export const submitQuizResult = async (
         const correctAnswer = normalizeText(question.options[0] || "");
         isCorrect = userAnswer === correctAnswer;
       } else {
-        // For MCQ and True/False, use the existing index comparison
         isCorrect = q.selectedAnswer === question.correctAnswer;
       }
 
@@ -222,13 +222,12 @@ export const submitQuizResult = async (
 
     await quiz.save();
 
-    // Update user statistics
-      await User.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalQuizzes": 1,
-          "statistics.totalCorrectAnswers": correctAnswers,
-        },
-      });
+    await User.findByIdAndUpdate(userId, {
+      $inc: {
+        "statistics.totalQuizzes": 1,
+        "statistics.totalCorrectAnswers": correctAnswers,
+      },
+    });
 
     res.status(200).json({
       message: "Quiz results submitted successfully",
@@ -248,7 +247,6 @@ export const getQuizHistory = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const user = req.user;
 
     const quizzes = await Quiz.find({
       createdBy: userId,
@@ -312,7 +310,8 @@ export const explainAnswer = async (
         ? parseInt(correctAnswerIndex, 10)
         : question.correctAnswer;
 
-    const isCorrect = selectedIndex !== undefined && selectedIndex === correctIndex;
+    const isCorrect =
+      selectedIndex !== undefined && selectedIndex === correctIndex;
 
     const prompt = `Explain this quiz question to help the student understand why the answer is correct or incorrect.
 
@@ -320,20 +319,26 @@ Question: ${question.question}
 Question Type: ${question.questionType}
 Options: ${question.options.join(", ")}
 
-${selectedIndex !== undefined
-  ? `Selected Answer: ${question.options[selectedIndex]}`
-  : "No answer selected"}
+${
+  selectedIndex !== undefined
+    ? `Selected Answer: ${question.options[selectedIndex]}`
+    : "No answer selected"
+}
 Correct Answer: ${question.options[correctIndex]}
 
-${isCorrect
-  ? "The student got this correct."
-  : "The student got this incorrect."}
+${
+  isCorrect
+    ? "The student got this correct."
+    : "The student got this incorrect."
+}
 
 Provide a clear, educational explanation that:
 1. Explains why the correct answer is right
-${!isCorrect && selectedIndex !== undefined
-  ? `2. Explains why the selected answer "${question.options[selectedIndex]}" is wrong`
-  : ""}
+${
+  !isCorrect && selectedIndex !== undefined
+    ? `2. Explains why the selected answer "${question.options[selectedIndex]}" is wrong`
+    : ""
+}
 3. Helps the student understand the concept
 4. Uses appropriate language for educational purposes
 5. Is concise but thorough (2-3 sentences)
@@ -361,5 +366,39 @@ Return a JSON object with this structure:
   } catch (error) {
     console.error("Error explaining answer:", error);
     res.status(500).json({ message: "Error generating explanation" });
+  }
+};
+
+export const deleteQuiz = async (
+  req: UnifiedAuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user._id;
+    const { quizId } = req.params;
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      createdBy: userId,
+    });
+
+    if (!quiz) {
+      res.status(404).json({ message: "Quiz not found or unauthorized" });
+      return;
+    }
+
+    await Quiz.deleteOne({ _id: quizId });
+
+    await User.findByIdAndUpdate(userId, {
+      $inc: { "statistics.totalQuizzes": -1 },
+    });
+
+    res.status(200).json({
+      message: "Quiz deleted successfully",
+      quizId,
+    });
+  } catch (error) {
+    console.error("Error deleting quiz:", error);
+    res.status(500).json({ message: "Error deleting quiz" });
   }
 };

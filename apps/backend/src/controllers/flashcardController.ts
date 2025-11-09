@@ -97,12 +97,12 @@ export const generateFlashcards = async (
     });
 
     // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalFlashcards": savedFlashcards.length,
-          "statistics.totalDecks": 1,
-        },
-      });
+    await userModel.findByIdAndUpdate(userId, {
+      $inc: {
+        "statistics.totalFlashcards": savedFlashcards.length,
+        "statistics.totalDecks": 1,
+      },
+    });
 
     res.status(201).json({
       message: "Flashcards generated successfully",
@@ -202,12 +202,12 @@ export const generateFlashcardsFromFile = async (
     });
 
     // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalFlashcards": savedFlashcards.length,
-          "statistics.totalDecks": 1,
-        },
-      });
+    await userModel.findByIdAndUpdate(userId, {
+      $inc: {
+        "statistics.totalFlashcards": savedFlashcards.length,
+        "statistics.totalDecks": 1,
+      },
+    });
 
     res.status(201).json({
       message: "Flashcards generated successfully",
@@ -272,12 +272,12 @@ export const generateFlashcardsFromQuiz = async (
     });
 
     // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalFlashcards": savedFlashcards.length,
-          "statistics.totalDecks": 1,
-        },
-      });
+    await userModel.findByIdAndUpdate(userId, {
+      $inc: {
+        "statistics.totalFlashcards": savedFlashcards.length,
+        "statistics.totalDecks": 1,
+      },
+    });
 
     res.status(201).json({
       message: "Flashcards generated successfully",
@@ -357,9 +357,9 @@ export const createDeck = async (
     });
 
     // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: { "statistics.totalDecks": 1 },
-      });
+    await userModel.findByIdAndUpdate(userId, {
+      $inc: { "statistics.totalDecks": 1 },
+    });
 
     res.status(201).json({
       message: "Deck created successfully",
@@ -473,9 +473,9 @@ export const submitReview = async (
     }
 
     // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: { "statistics.totalStudySessions": 1 },
-      });
+    await userModel.findByIdAndUpdate(userId, {
+      $inc: { "statistics.totalStudySessions": 1 },
+    });
 
     res.status(200).json({
       message: "Review submitted successfully",
@@ -494,9 +494,7 @@ export const getStudyProgress = async (
   try {
     const userId = req.user._id;
 
-    const statistics = await SpacedRepetitionService.getStudyStatistics(
-      userId
-    );
+    const statistics = await SpacedRepetitionService.getStudyStatistics(userId);
 
     res.status(200).json({
       statistics,
@@ -504,5 +502,44 @@ export const getStudyProgress = async (
   } catch (error) {
     console.error("Error getting study progress:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const deleteDeck = async (
+  req: UnifiedAuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user._id;
+    const { deckId } = req.params;
+
+    const deck = await Deck.findOne({
+      _id: deckId,
+      createdBy: userId,
+    });
+
+    if (!deck) {
+      res.status(404).json({ message: "Deck not found or unauthorized" });
+      return;
+    }
+
+    await Flashcard.deleteMany({ _id: { $in: deck.flashcards } });
+
+    await Deck.deleteOne({ _id: deckId });
+
+    await userModel.findByIdAndUpdate(userId, {
+      $inc: {
+        "statistics.totalDecks": -1,
+        "statistics.totalFlashcards": -deck.flashcards.length,
+      },
+    });
+
+    res.status(200).json({
+      message: "Deck deleted successfully",
+      deckId,
+    });
+  } catch (error) {
+    console.error("Error deleting deck:", error);
+    res.status(500).json({ message: "Error deleting deck" });
   }
 };

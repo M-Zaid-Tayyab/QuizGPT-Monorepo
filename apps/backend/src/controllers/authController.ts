@@ -80,7 +80,6 @@ export const socialLogin = async (
   }
 };
 
-
 function hasStreakGap(lastQuizDate: Date | null): boolean {
   if (!lastQuizDate) return false;
 
@@ -156,7 +155,7 @@ export const updateUser = async (
       filteredUpdateData.image = newImageUrl;
     }
 
-      await userModel.findByIdAndUpdate(userId, filteredUpdateData);
+    await userModel.findByIdAndUpdate(userId, filteredUpdateData);
 
     res.status(200).json({
       message: "User updated successfully",
@@ -177,10 +176,10 @@ export const deleteUser = async (
 
     await Quiz.deleteMany({ createdBy: userId });
 
-      const deletedUser = await userModel.findByIdAndDelete(userId);
-      if (!deletedUser) {
-        res.status(404).json({ message: "User not found" });
-        return;
+    const deletedUser = await userModel.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
     }
 
     res.status(200).json({ message: "User deleted successfully" });
