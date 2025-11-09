@@ -25,20 +25,6 @@ interface GetDecksResponse {
   };
 }
 
-interface StudyStatistics {
-  totalCards: number;
-  cardsDue: number;
-  cardsLearning: number;
-  cardsReviewing: number;
-  cardsMastered: number;
-  averageAccuracy: number;
-  totalStudyTime: number;
-}
-
-interface GetStudyProgressResponse {
-  statistics: StudyStatistics;
-}
-
 export const useFlashcardAPI = () => {
   const queryClient = useQueryClient();
   const generateFlashcardsMutation = useMutation({
@@ -50,7 +36,6 @@ export const useFlashcardAPI = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
-      queryClient.invalidateQueries({ queryKey: ["flashcard-progress"] });
     },
   });
 
@@ -66,7 +51,6 @@ export const useFlashcardAPI = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
-      queryClient.invalidateQueries({ queryKey: ["flashcard-progress"] });
     },
   });
 
@@ -79,7 +63,6 @@ export const useFlashcardAPI = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
-      queryClient.invalidateQueries({ queryKey: ["flashcard-progress"] });
     },
   });
 
@@ -120,52 +103,6 @@ export const useFlashcardAPI = () => {
     return response.data;
   };
 
-  const getCardsForReview = async (deckId?: string) => {
-    const params = deckId ? { deckId } : {};
-    const response = await client.get("flashcards/review", {
-      params,
-    });
-    return response.data;
-  };
-
-  const submitReviewMutation = useMutation({
-    mutationFn: async (data: {
-      flashcardId: string;
-      response: "again" | "hard" | "good" | "easy";
-      responseTime: number;
-      studyMode?: string;
-    }) => {
-      const response = await client.post(
-        `flashcards/review/${data.flashcardId}`,
-        {
-          response: data.response,
-          responseTime: data.responseTime,
-          studyMode: data.studyMode || "spaced_repetition",
-        }
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-progress"] });
-    },
-  });
-
-  const getStudyProgress = async (): Promise<GetStudyProgressResponse> => {
-    const response = await client.get("flashcards/progress");
-    return response.data;
-  };
-
-  const useStudyProgress = () => {
-    return useQuery({
-      queryKey: ["flashcard-progress"],
-      queryFn: getStudyProgress,
-      staleTime: 30_000,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    });
-  };
-
   const generateFlashcards = async (data: GenerateFlashcardsData) => {
     return generateFlashcardsMutation.mutateAsync(data);
   };
@@ -202,20 +139,6 @@ export const useFlashcardAPI = () => {
     return createDeckMutation.mutateAsync(data);
   };
 
-  const submitReview = async (
-    flashcardId: string,
-    response: "again" | "hard" | "good" | "easy",
-    responseTime: number,
-    studyMode?: string
-  ) => {
-    return submitReviewMutation.mutateAsync({
-      flashcardId,
-      response,
-      responseTime,
-      studyMode,
-    });
-  };
-
   return {
     queryClient,
 
@@ -223,10 +146,8 @@ export const useFlashcardAPI = () => {
     generateFlashcardsFromFileMutation,
     generateFlashcardsFromQuizMutation,
     createDeckMutation,
-    submitReviewMutation,
 
     useUserDecks,
-    useStudyProgress,
 
     generateFlashcards,
     generateFlashcardsFromFile,
@@ -234,8 +155,5 @@ export const useFlashcardAPI = () => {
     getUserDecks,
     createDeck,
     getDeckFlashcards,
-    getCardsForReview,
-    submitReview,
-    getStudyProgress,
   };
 };

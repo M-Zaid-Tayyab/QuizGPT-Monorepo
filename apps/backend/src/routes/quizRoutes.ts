@@ -7,7 +7,7 @@ import {
   getQuizHistory,
   submitQuizResult,
 } from "../controllers/quizController";
-import { protectUnified } from "../middleware/unifiedAuthMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
@@ -54,21 +54,21 @@ const handleMulterError = (
 
 router.post(
   "/generate",
-  protectUnified,
+  authenticate as any,
   upload.single("file"),
   handleMulterError,
-  generateCustomQuiz
+  generateCustomQuiz as any
 );
 router.post(
   "/generate-custom",
-  protectUnified,
+  authenticate as any,
   upload.single("file"),
   handleMulterError,
-  generateCustomQuiz
+  generateCustomQuiz as any
 );
-router.post("/submit", protectUnified, submitQuizResult);
-router.get("/history", protectUnified, getQuizHistory);
-router.post("/explain-answer", protectUnified, explainAnswer);
-router.delete("/:quizId", protectUnified, deleteQuiz);
+router.post("/submit", authenticate as any, submitQuizResult as any);
+router.get("/history", authenticate as any, getQuizHistory as any);
+router.post("/explain-answer", authenticate as any, explainAnswer as any);
+router.delete("/:quizId", authenticate as any, deleteQuiz as any);
 
 export default router;

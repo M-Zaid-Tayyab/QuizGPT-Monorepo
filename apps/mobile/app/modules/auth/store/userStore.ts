@@ -10,21 +10,6 @@ export type User = {
   socialType?: "google" | "apple";
   isSocialAuth?: boolean;
   token?: string;
-  streak?: {
-    current: number;
-    longest: number;
-    lastQuizDate?: string;
-  };
-  statistics?: {
-    totalQuizzes: number;
-    averageScore: number;
-    totalCorrectAnswers: number;
-    totalFlashcards: number;
-    totalDecks: number;
-    totalStudySessions: number;
-    averageStudyTime: number;
-    flashcardAccuracy: number;
-  };
   age?: number;
   grade?: "School" | "College" | "University" | "Post-Graduate";
   biggestChallenge?:

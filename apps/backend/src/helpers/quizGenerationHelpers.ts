@@ -1,4 +1,4 @@
-import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
+import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import {
   extractTextFromImage,
   extractTextFromPDF,
@@ -17,7 +17,10 @@ export interface QuizOptions {
   difficulty: string;
   questionTypes: string[];
   numberOfQuestions: number;
-  user: any;
+  user: {
+    age?: number;
+    grade?: string;
+  };
   examType?: string;
 }
 
@@ -30,13 +33,12 @@ export interface Question {
 
 export class InputProcessor {
   static async extractRequestData(
-    req: UnifiedAuthRequest
+    req: AuthenticatedRequest
   ): Promise<QuizRequest> {
     if (req.file) {
       // Safely handle optional fields from multipart forms
       const topic = req.body?.topic || "General";
-      const difficulty =
-        req.body?.difficulty || req.user?.difficulty || "Medium";
+      const difficulty = req.body?.difficulty || "Medium";
       let questionTypes: string[] = ["mcq", "true_false", "fill_blank"];
       const rawQuestionTypes = req.body?.questionTypes;
       if (rawQuestionTypes) {
@@ -70,7 +72,7 @@ export class InputProcessor {
     } else {
       return {
         topic: req.body.topic || (req.query.prompt as string),
-        difficulty: req.body.difficulty || req.user?.difficulty || "Medium",
+        difficulty: req.body.difficulty || "Medium",
         questionTypes: req.body.questionTypes || [
           "mcq",
           "true_false",

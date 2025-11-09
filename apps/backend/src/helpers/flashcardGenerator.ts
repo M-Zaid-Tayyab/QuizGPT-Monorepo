@@ -8,7 +8,10 @@ export interface FlashcardOptions {
   difficulty: string;
   category: string;
   count: number;
-  user: any;
+  user: {
+    age?: number;
+    grade?: string;
+  };
   sourceMaterial?: string;
   generatedFrom?: string;
 }
@@ -121,14 +124,14 @@ Return strict JSON with keys: {"name": string, "description": string}`;
     options: FlashcardOptions
   ): string {
     const { difficulty, category, count, user } = options;
-    const { age, grade, gender } = user;
+    const { age, grade } = user;
 
-    return `Generate ${count} high-quality flashcards from this study material for a ${age}-year-old ${gender} in ${grade} grade.
+    return `Generate ${count} high-quality flashcards from this study material for a ${age ? `${age}-year-old ` : ""}student in ${grade} grade.
 
 STUDY MATERIAL:
 ${text}
 
-TARGET AUDIENCE: ${age}-year-old ${gender} in ${grade} grade
+TARGET AUDIENCE: ${age ? `${age}-year-old ` : ""}student in ${grade} grade
 DIFFICULTY: ${difficulty}
 CATEGORY: ${category}
 TOTAL FLASHCARDS: ${count}

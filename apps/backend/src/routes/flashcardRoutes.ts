@@ -6,13 +6,10 @@ import {
   generateFlashcards,
   generateFlashcardsFromFile,
   generateFlashcardsFromQuiz,
-  getCardsForReview,
   getDeckFlashcards,
-  getStudyProgress,
   getUserDecks,
-  submitReview,
 } from "../controllers/flashcardController";
-import { protectUnified } from "../middleware/unifiedAuthMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
@@ -37,23 +34,19 @@ const upload = multer({
   },
 });
 
-router.use(protectUnified);
+router.use(authenticate as any);
 
-router.post("/generate", generateFlashcards);
+router.post("/generate", generateFlashcards as any);
 router.post(
   "/generate-from-file",
   upload.single("file"),
-  generateFlashcardsFromFile
+  generateFlashcardsFromFile as any
 );
-router.post("/generate-from-quiz", generateFlashcardsFromQuiz);
+router.post("/generate-from-quiz", generateFlashcardsFromQuiz as any);
 
-router.get("/decks", getUserDecks);
-router.post("/decks", createDeck);
-router.get("/decks/:deckId/flashcards", getDeckFlashcards);
-router.delete("/decks/:deckId", deleteDeck);
-
-router.get("/review", getCardsForReview);
-router.post("/review/:flashcardId", submitReview);
-router.get("/progress", getStudyProgress);
+router.get("/decks", getUserDecks as any);
+router.post("/decks", createDeck as any);
+router.get("/decks/:deckId/flashcards", getDeckFlashcards as any);
+router.delete("/decks/:deckId", deleteDeck as any);
 
 export default router;

@@ -12,7 +12,8 @@ const deckSchema = new mongoose.Schema(
       maxlength: 500,
     },
     createdBy: {
-      type: mongoose.Schema.Types.Mixed,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     userType: {

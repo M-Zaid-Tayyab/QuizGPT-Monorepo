@@ -1,10 +1,9 @@
 import express from "express";
 import { searchStudySets } from "../controllers/searchController";
-import { protectUnified } from "../middleware/unifiedAuthMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
-router.get("/", protectUnified, searchStudySets);
+router.get("/", authenticate as any, searchStudySets as any);
 
 export default router;
-

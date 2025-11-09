@@ -1,6 +1,54 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 
-const userSchema = new mongoose.Schema(
+export interface IUserDocument extends Document {
+  name: string;
+  email: string;
+  image?: string;
+  socialId?: string;
+  socialType?: "google" | "apple";
+  isSocialAuth?: boolean;
+  age?: number;
+  grade?: "School" | "College" | "University" | "Post-Graduate";
+  biggestChallenge?:
+    | "memory_retention"
+    | "time_management"
+    | "overwhelmed"
+    | "focus_issues"
+    | "exam_anxiety";
+  studyMethod?:
+    | "rereading"
+    | "highlighting"
+    | "practice_problems"
+    | "study_groups"
+    | "no_system";
+  studyMaterials?:
+    | "textbooks_pdfs"
+    | "lecture_notes"
+    | "research_papers"
+    | "mixed_materials";
+  studyTime?: "less_than_5" | "5_to_10" | "10_to_20" | "more_than_20";
+  strugglingSubjects?:
+    | "math_science"
+    | "languages"
+    | "history_social"
+    | "all_subjects";
+  examConfidence?:
+    | "very_confident"
+    | "somewhat_confident"
+    | "not_confident"
+    | "panic_mode";
+  studyNeeds?:
+    | "memory_techniques"
+    | "faster_methods"
+    | "study_structure"
+    | "exam_practice"
+    | "all_above";
+  isProUser?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const userSchema = new mongoose.Schema<IUserDocument>(
   {
     name: {
       type: String,
@@ -24,51 +72,6 @@ const userSchema = new mongoose.Schema(
     isSocialAuth: {
       type: Boolean,
       default: false,
-    },
-    streak: {
-      current: {
-        type: Number,
-        default: 0,
-      },
-      longest: {
-        type: Number,
-        default: 0,
-      },
-      lastQuizDate: Date,
-    },
-    statistics: {
-      totalQuizzes: {
-        type: Number,
-        default: 0,
-      },
-      averageScore: {
-        type: Number,
-        default: 0,
-      },
-      totalCorrectAnswers: {
-        type: Number,
-        default: 0,
-      },
-      totalFlashcards: {
-        type: Number,
-        default: 0,
-      },
-      totalDecks: {
-        type: Number,
-        default: 0,
-      },
-      totalStudySessions: {
-        type: Number,
-        default: 0,
-      },
-      averageStudyTime: {
-        type: Number,
-        default: 0,
-      },
-      flashcardAccuracy: {
-        type: Number,
-        default: 0,
-      },
     },
     age: {
       type: Number,
@@ -141,4 +144,4 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("User", userSchema);
+export default mongoose.model<IUserDocument>("User", userSchema);

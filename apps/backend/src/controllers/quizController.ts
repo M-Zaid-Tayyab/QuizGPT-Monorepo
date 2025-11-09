@@ -7,7 +7,7 @@ import {
   extractTextFromPDF,
   validateFileType,
 } from "../helpers/textExtractionHelper";
-import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
+import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import Quiz from "../models/quizModel";
 import User from "../models/userModel";
 dotenv.config();
@@ -23,7 +23,7 @@ interface QuestionAnswer {
 }
 
 export const generateCustomQuiz = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -33,7 +33,7 @@ export const generateCustomQuiz = async (
       res.status(404).json({ message: "User not found" });
       return;
     }
-    const { age, grade, gender } = user;
+    const { age, grade } = user;
 
     let userInstructions,
       difficulty,
@@ -133,7 +133,7 @@ export const generateCustomQuiz = async (
       difficulty,
       questionTypes,
       numberOfQuestions,
-      user: { age, grade, gender },
+      user: { age, grade },
       examType,
     });
 
@@ -169,7 +169,7 @@ export const generateCustomQuiz = async (
 };
 
 export const submitQuizResult = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -242,7 +242,7 @@ export const submitQuizResult = async (
 };
 
 export const getQuizHistory = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -265,7 +265,7 @@ export const getQuizHistory = async (
 };
 
 export const explainAnswer = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -370,7 +370,7 @@ Return a JSON object with this structure:
 };
 
 export const deleteQuiz = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {

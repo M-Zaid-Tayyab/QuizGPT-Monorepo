@@ -1,10 +1,10 @@
 import { Response } from "express";
-import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
+import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import Deck from "../models/deckModel";
 import Quiz from "../models/quizModel";
 
 export const searchStudySets = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
