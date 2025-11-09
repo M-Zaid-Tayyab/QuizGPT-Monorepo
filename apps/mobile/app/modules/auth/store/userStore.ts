@@ -10,21 +10,6 @@ export type User = {
   socialType?: "google" | "apple";
   isSocialAuth?: boolean;
   token?: string;
-  streak?: {
-    current: number;
-    longest: number;
-    lastQuizDate?: string;
-  };
-  statistics?: {
-    totalQuizzes: number;
-    averageScore: number;
-    totalCorrectAnswers: number;
-    totalFlashcards: number;
-    totalDecks: number;
-    totalStudySessions: number;
-    averageStudyTime: number;
-    flashcardAccuracy: number;
-  };
   age?: number;
   grade?: "School" | "College" | "University" | "Post-Graduate";
   biggestChallenge?:
@@ -74,14 +59,6 @@ interface UserState {
   setUser: (user: Partial<User>) => void;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
-  quizCount: number;
-  setQuizCount: (quizCount: number) => void;
-  lastQuizDate: string;
-  setLastQuizDate: (lastQuizDate: string) => void;
-  hasUsedFreeQuiz: boolean;
-  setHasUsedFreeQuiz: (used: boolean) => void;
-  hasUsedFreeDeck: boolean;
-  setHasUsedFreeDeck: (used: boolean) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -90,25 +67,11 @@ export const useUserStore = create<UserState>()(
       user: null,
       isAuthenticated: false,
       isOnboardingCompleted: false,
-      quizCount: 0,
-      lastQuizDate: "",
-      hasUsedFreeQuiz: false,
-      hasUsedFreeDeck: false,
       setUser: (user) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...user } : user,
           isAuthenticated: true,
         })),
-
-      setQuizCount: (quizCount: number) =>
-        set((state) => ({
-          quizCount: quizCount,
-        })),
-
-      setLastQuizDate: (lastQuizDate: string) => set({ lastQuizDate }),
-
-      setHasUsedFreeQuiz: (used: boolean) => set({ hasUsedFreeQuiz: used }),
-      setHasUsedFreeDeck: (used: boolean) => set({ hasUsedFreeDeck: used }),
 
       onboardingCompleted: (isCompleted: boolean) =>
         set({ isOnboardingCompleted: isCompleted }),

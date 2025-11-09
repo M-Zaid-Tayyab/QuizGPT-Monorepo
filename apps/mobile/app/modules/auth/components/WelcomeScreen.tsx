@@ -18,6 +18,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 
 import AnimatedLoadingModal from "@/app/components/AnimatedLoadingModal";
+import Purchases from "react-native-purchases";
 import Toast from "react-native-toast-message";
 import { identifyDevice } from "vexo-analytics";
 import useApis from "../hooks/useApis";
@@ -50,6 +51,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       const response = await socialLoginMutation.mutateAsync(payload);
 
       identifyDevice(response.data.user._id);
+      await Purchases.logIn(response.data.user._id);
       setUser({
         ...response.data.user,
         token: response.data.token,

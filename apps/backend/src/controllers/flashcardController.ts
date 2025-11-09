@@ -4,17 +4,12 @@ import {
   FlashcardOptions,
 } from "../helpers/flashcardGenerator";
 import { InputProcessor } from "../helpers/quizGenerationHelpers";
-import {
-  ReviewResponse,
-  SpacedRepetitionService,
-} from "../helpers/spacedRepetitionService";
-import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
+import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import Deck from "../models/deckModel";
 import Flashcard from "../models/flashcardModel";
-import userModel from "../models/userModel";
 
 export const generateFlashcards = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -37,7 +32,7 @@ export const generateFlashcards = async (
       hard: "Hard",
       Hard: "Hard",
     };
-    difficulty = difficultyMap[difficulty] || user.difficulty || "Medium";
+    difficulty = difficultyMap[difficulty] || "Medium";
 
     if (!text || text.trim().length === 0) {
       res.status(400).json({ message: "Text content is required" });
@@ -56,7 +51,6 @@ export const generateFlashcards = async (
       user: {
         age: user.age || 20,
         grade: user.grade || "College",
-        gender: user.gender || "Other",
       },
       sourceMaterial: text,
       generatedFrom: "text",
@@ -96,14 +90,6 @@ export const generateFlashcards = async (
       generatedFrom: "text",
     });
 
-    // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalFlashcards": savedFlashcards.length,
-          "statistics.totalDecks": 1,
-        },
-      });
-
     res.status(201).json({
       message: "Flashcards generated successfully",
       flashcards: savedFlashcards,
@@ -117,7 +103,7 @@ export const generateFlashcards = async (
 };
 
 export const generateFlashcardsFromFile = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -151,8 +137,7 @@ export const generateFlashcardsFromFile = async (
       hard: "Hard",
       Hard: "Hard",
     };
-    const difficulty =
-      difficultyMap[requestData.difficulty] || user.difficulty || "Medium";
+    const difficulty = difficultyMap[requestData.difficulty] || "Medium";
 
     const options: FlashcardOptions = {
       difficulty,
@@ -161,7 +146,6 @@ export const generateFlashcardsFromFile = async (
       user: {
         age: user.age || 20,
         grade: user.grade || "College",
-        gender: user.gender || "Other",
       },
       sourceMaterial: text,
       generatedFrom: requestData.file ? "pdf" : "text",
@@ -201,14 +185,6 @@ export const generateFlashcardsFromFile = async (
       generatedFrom: requestData.file ? "pdf" : "text",
     });
 
-    // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalFlashcards": savedFlashcards.length,
-          "statistics.totalDecks": 1,
-        },
-      });
-
     res.status(201).json({
       message: "Flashcards generated successfully",
       flashcards: savedFlashcards,
@@ -222,7 +198,7 @@ export const generateFlashcardsFromFile = async (
 };
 
 export const generateFlashcardsFromQuiz = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -271,14 +247,6 @@ export const generateFlashcardsFromQuiz = async (
       generatedFrom: "quiz",
     });
 
-    // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: {
-          "statistics.totalFlashcards": savedFlashcards.length,
-          "statistics.totalDecks": 1,
-        },
-      });
-
     res.status(201).json({
       message: "Flashcards generated successfully",
       flashcards: savedFlashcards,
@@ -292,7 +260,7 @@ export const generateFlashcardsFromQuiz = async (
 };
 
 export const getUserDecks = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -335,7 +303,7 @@ export const getUserDecks = async (
 };
 
 export const createDeck = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -356,11 +324,6 @@ export const createDeck = async (
       color: color || "#FF6B6B",
     });
 
-    // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: { "statistics.totalDecks": 1 },
-      });
-
     res.status(201).json({
       message: "Deck created successfully",
       deck,
@@ -372,7 +335,7 @@ export const createDeck = async (
 };
 
 export const getDeckFlashcards = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -400,109 +363,34 @@ export const getDeckFlashcards = async (
   }
 };
 
-export const getCardsForReview = async (
-  req: UnifiedAuthRequest,
+export const deleteDeck = async (
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user._id;
-    const { limit = 20, deckId } = req.query;
+    const { deckId } = req.params;
 
-    let cards;
-    if (deckId) {
-      // Get cards from specific deck
-      const deck = await Deck.findOne({
-        _id: deckId,
-        createdBy: userId,
-      }).populate("flashcards");
-
-      if (!deck) {
-        res.status(404).json({ message: "Deck not found" });
-        return;
-      }
-
-      const now = new Date();
-      cards = deck.flashcards.filter((card: any) => card.nextReview <= now);
-    } else {
-      // Get all cards due for review
-      cards = await SpacedRepetitionService.getCardsForReview(
-        userId,
-        Number(limit)
-      );
-    }
-
-    res.status(200).json({
-      cards,
-      count: cards.length,
+    const deck = await Deck.findOne({
+      _id: deckId,
+      createdBy: userId,
     });
-  } catch (error) {
-    console.error("Error getting cards for review:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
 
-export const submitReview = async (
-  req: UnifiedAuthRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    const userId = req.user._id;
-    const { flashcardId } = req.params;
-    const {
-      response,
-      responseTime,
-      studyMode = "spaced_repetition",
-    } = req.body;
-
-    if (!response || !["again", "hard", "good", "easy"].includes(response)) {
-      res.status(400).json({ message: "Valid response is required" });
+    if (!deck) {
+      res.status(404).json({ message: "Deck not found or unauthorized" });
       return;
     }
 
-    const result = await SpacedRepetitionService.submitReview(
-      userId,
-      flashcardId,
-      response as ReviewResponse,
-      responseTime || 0,
-      studyMode
-    );
+    await Flashcard.deleteMany({ _id: { $in: deck.flashcards } });
 
-    if (!result.success) {
-      res.status(400).json({ message: "Failed to submit review" });
-      return;
-    }
-
-    // Update user statistics
-      await userModel.findByIdAndUpdate(userId, {
-        $inc: { "statistics.totalStudySessions": 1 },
-      });
+    await Deck.deleteOne({ _id: deckId });
 
     res.status(200).json({
-      message: "Review submitted successfully",
-      nextReview: result.nextReview,
+      message: "Deck deleted successfully",
+      deckId,
     });
   } catch (error) {
-    console.error("Error submitting review:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-export const getStudyProgress = async (
-  req: UnifiedAuthRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    const userId = req.user._id;
-
-    const statistics = await SpacedRepetitionService.getStudyStatistics(
-      userId
-    );
-
-    res.status(200).json({
-      statistics,
-    });
-  } catch (error) {
-    console.error("Error getting study progress:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error deleting deck:", error);
+    res.status(500).json({ message: "Error deleting deck" });
   }
 };

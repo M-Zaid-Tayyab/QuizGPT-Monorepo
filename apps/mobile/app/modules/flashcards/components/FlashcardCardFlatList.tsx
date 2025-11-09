@@ -37,10 +37,9 @@ const FlashcardCardFlatList = React.forwardRef<
   const flatListRef = useRef<FlatList>(null);
   const lastReportedIndex = useRef(currentIndex);
 
-  // Stable, responsive card dimensions (no animation changes)
-  const horizontalPadding = 32; // px-4 on each side in item container
+  const horizontalPadding = 32;
   const cardWidth = Math.max(260, Math.min(width - horizontalPadding, 380));
-  const cardHeight = Math.round(cardWidth * 0.75); // 4:3 aspect ratio
+  const cardHeight = Math.round(cardWidth * 0.75);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -56,7 +55,6 @@ const FlashcardCardFlatList = React.forwardRef<
   };
 
   const flipCard = (index: number) => {
-    // Step 3: basic press feedback only (no scale animation yet)
     Haptics.selectionAsync();
     onFlip(index);
   };
@@ -76,7 +74,6 @@ const FlashcardCardFlatList = React.forwardRef<
     ]).start();
   }, [initialHint]);
 
-  // Animate flip when isFlipped changes
   useEffect(() => {
     Animated.timing(flipAnimation, {
       toValue: isFlipped ? 1 : 0,
@@ -86,7 +83,6 @@ const FlashcardCardFlatList = React.forwardRef<
     }).start();
   }, [currentIndex, isFlipped, flipAnimation]);
 
-  // Update lastReportedIndex when currentIndex changes from outside (header navigation)
   useEffect(() => {
     lastReportedIndex.current = currentIndex;
   }, [currentIndex]);
@@ -119,7 +115,6 @@ const FlashcardCardFlatList = React.forwardRef<
     [backInterpolate, pressScale]
   );
 
-  // Hint transform only nudges translateY to avoid rotate/scale conflicts
   const hintTranslateTransform = useMemo(
     () => [
       {
@@ -144,7 +139,6 @@ const FlashcardCardFlatList = React.forwardRef<
     const isNearViewport = isCurrentCard || isAdjacentCard;
 
     if (!isNearViewport) {
-      // Do not render distant cards to save work
       return (
         <View
           style={{ width, height: cardHeight + 24 }}
@@ -177,9 +171,7 @@ const FlashcardCardFlatList = React.forwardRef<
       >
         <FlashcardFlipCard
           flashcard={flashcard}
-          // Only the current card reflects flip state; neighbors always show front
           isFlipped={isCurrentCard ? isFlipped : false}
-          // Disable flipping on non-current to avoid accidental taps during swipe
           onPress={isCurrentCard ? () => flipCard(index) : () => {}}
           pressScale={pressScale}
           frontTransform={
@@ -201,7 +193,6 @@ const FlashcardCardFlatList = React.forwardRef<
     if (viewableItems && viewableItems.length > 0) {
       const newIndex = viewableItems[0].index;
 
-      // More robust bounds checking and prevent duplicate updates
       if (
         newIndex !== lastReportedIndex.current &&
         newIndex >= 0 &&
@@ -210,7 +201,6 @@ const FlashcardCardFlatList = React.forwardRef<
         !isNaN(newIndex)
       ) {
         lastReportedIndex.current = newIndex;
-        // Use requestAnimationFrame to ensure it happens after render
         requestAnimationFrame(() => {
           onIndexChange(newIndex);
         });
@@ -219,12 +209,11 @@ const FlashcardCardFlatList = React.forwardRef<
   }).current;
 
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 80, // Higher threshold for more stable detection
-    minimumViewTime: 200, // Longer minimum view time to prevent rapid changes
-    waitForInteraction: false, // Don't wait for interaction
+    itemVisiblePercentThreshold: 80,
+    minimumViewTime: 200,
+    waitForInteraction: false,
   }).current;
 
-  // Handle programmatic navigation with error handling
   const scrollToNext = () => {
     if (currentIndex < flashcards.length - 1) {
       try {
@@ -234,7 +223,6 @@ const FlashcardCardFlatList = React.forwardRef<
         });
       } catch (error) {
         console.warn("Error scrolling to next card:", error);
-        // Fallback: scroll to offset
         flatListRef.current?.scrollToOffset({
           offset: (currentIndex + 1) * width,
           animated: true,
@@ -252,7 +240,6 @@ const FlashcardCardFlatList = React.forwardRef<
         });
       } catch (error) {
         console.warn("Error scrolling to previous card:", error);
-        // Fallback: scroll to offset
         flatListRef.current?.scrollToOffset({
           offset: (currentIndex - 1) * width,
           animated: true,
@@ -261,7 +248,6 @@ const FlashcardCardFlatList = React.forwardRef<
     }
   };
 
-  // Expose methods to parent via ref
   React.useImperativeHandle(ref, () => ({
     scrollToNext,
     scrollToPrevious,
@@ -290,12 +276,10 @@ const FlashcardCardFlatList = React.forwardRef<
         decelerationRate="fast"
         style={{ flex: 1 }}
         contentContainerStyle={{ alignItems: "center" }}
-        removeClippedSubviews={false} // Prevent cards from disappearing
-        maxToRenderPerBatch={3} // Render more items for smoother scrolling
-        windowSize={5} // Keep more items in memory
+        removeClippedSubviews={false}
+        maxToRenderPerBatch={3}
+        windowSize={5}
         onScrollToIndexFailed={(info) => {
-          console.warn("ScrollToIndex failed:", info);
-          // Fallback: scroll to offset
           setTimeout(() => {
             flatListRef.current?.scrollToOffset({
               offset: info.index * width,

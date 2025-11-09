@@ -23,7 +23,8 @@ const flashcardSchema = new mongoose.Schema(
     },
     tags: [String],
     createdBy: {
-      type: mongoose.Schema.Types.Mixed,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     userType: {

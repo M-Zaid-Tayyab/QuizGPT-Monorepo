@@ -3,9 +3,9 @@ import colors from "@/app/constants/colors";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { clsx } from "clsx";
 import * as DocumentPicker from "expo-document-picker";
-import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+import ImagePicker from "react-native-image-crop-picker";
 
 interface CreateRequestInputProps {
   topicText: string;
@@ -54,24 +54,20 @@ const CreateRequestInput: React.FC<CreateRequestInputProps> = ({
 
   const pickImage = async () => {
     try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) {
-        return;
-      }
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: "images",
-        selectionLimit: 1,
-        quality: 1,
+      const image = await ImagePicker.openCamera({
+        width: 2000,
+        height: 2000,
+        cropping: true,
+        forceJpeg: true,
+        compressImageQuality: 0.9,
+        mediaType: "photo",
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        onFileSelect({
-          uri: asset.uri,
-          name: asset.fileName || "photo.jpg",
-          type: asset.mimeType || "image/jpeg",
-        });
-      }
+      onFileSelect({
+        uri: image.path,
+        name: image.filename || `photo.jpg`,
+        type: image.mime || "image/jpeg",
+      });
     } catch (err) {
       console.log("Image picker error:", err);
     }
@@ -79,25 +75,20 @@ const CreateRequestInput: React.FC<CreateRequestInputProps> = ({
 
   const pickFromGallery = async () => {
     try {
-      const permission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        return;
-      }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: "images",
-        selectionLimit: 1,
-        quality: 1,
+      const image = await ImagePicker.openPicker({
+        width: 2000,
+        height: 2000,
+        cropping: true,
+        forceJpeg: true,
+        compressImageQuality: 0.9,
+        mediaType: "photo",
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        onFileSelect({
-          uri: asset.uri,
-          name: asset.fileName || "image.jpg",
-          type: asset.mimeType || "image/jpeg",
-        });
-      }
+      onFileSelect({
+        uri: image.path,
+        name: image.filename || `image.jpg`,
+        type: image.mime || "image/jpeg",
+      });
     } catch (err) {
       console.log("Gallery picker error:", err);
     }

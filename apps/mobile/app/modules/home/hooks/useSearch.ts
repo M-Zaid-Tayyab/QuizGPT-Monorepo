@@ -1,16 +1,25 @@
 import { useNavigation } from "@react-navigation/native";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
 
 import { client } from "@/app/services";
+import { useDeleteDeck, useDeleteQuiz } from "./useFeedItemDelete";
 import type { FeedItem } from "./useHome";
 
+type NavigationProp = {
+  navigate: (screen: string, params?: any) => void;
+  goBack: () => void;
+};
+
 export const useSearch = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  // Debounce search query (300ms delay)
+  const deleteQuizMutation = useDeleteQuiz();
+  const deleteDeckMutation = useDeleteDeck();
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -42,16 +51,38 @@ export const useSearch = () => {
     await refetch();
   };
 
-  const handleFeedItemPress = (item: FeedItem) => {
-    if (item.type === "quiz") {
-      (navigation as any).navigate("Quiz", {
-        quizData: item.raw,
-        isHistory: true,
-      });
-    } else {
-      (navigation as any).navigate("FlashcardScreen", { deck: item.raw });
-    }
-  };
+  const handleFeedItemPress = useCallback(
+    (item: FeedItem) => {
+      if (item.type === "quiz") {
+        navigation.navigate("Quiz", {
+          quizData: item.raw,
+          isHistory: true,
+        });
+      } else {
+        navigation.navigate("FlashcardScreen", { deck: item.raw });
+      }
+    },
+    [navigation]
+  );
+
+  const onDeleteItem = useCallback(
+    (item: FeedItem) => {
+      if (item.type === "quiz") {
+        deleteQuizMutation.mutate(item._id, {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["search"] });
+          },
+        });
+      } else if (item.type === "deck") {
+        deleteDeckMutation.mutate(item._id, {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["search"] });
+          },
+        });
+      }
+    },
+    [deleteQuizMutation, deleteDeckMutation, queryClient]
+  );
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -76,7 +107,10 @@ export const useSearch = () => {
     isLoading,
     filteredFeed,
     handleFeedItemPress,
+    onDeleteItem,
     refreshFeed,
+    isQuizDeleting: deleteQuizMutation.isPending,
+    isDeckDeleting: deleteDeckMutation.isPending,
   };
 };
 

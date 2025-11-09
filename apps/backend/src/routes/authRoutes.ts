@@ -6,13 +6,13 @@ import {
   socialLogin,
   updateUser,
 } from "../controllers/authController";
-import { protectUnified } from "../middleware/unifiedAuthMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
 router.post("/social-login", socialLogin);
-router.get("/user", protectUnified, getUserDetails);
-router.put("/user", protectUnified, updateUser);
-router.delete("/user", protectUnified, deleteUser);
+router.get("/user", authenticate as any, getUserDetails as any);
+router.put("/user", authenticate as any, updateUser as any);
+router.delete("/user", authenticate as any, deleteUser as any);
 
 export default router;

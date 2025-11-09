@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { uploadToCloudinary } from "../helpers/uploadHelper";
-import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
+import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import Quiz from "../models/quizModel";
 import { default as userModel } from "../models/userModel";
 dotenv.config();
@@ -80,20 +80,8 @@ export const socialLogin = async (
   }
 };
 
-
-function hasStreakGap(lastQuizDate: Date | null): boolean {
-  if (!lastQuizDate) return false;
-
-  const today = new Date();
-  const lastDate = new Date(lastQuizDate);
-  const diffInMs = today.getTime() - lastDate.getTime();
-  const diffInHours = diffInMs / (1000 * 60 * 60);
-
-  return diffInHours >= 24;
-}
-
 export const getUserDetails = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -102,19 +90,6 @@ export const getUserDetails = async (
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
-    }
-
-    if (!user.streak) {
-      user.streak = {
-        current: 0,
-        longest: 0,
-        lastQuizDate: null,
-      };
-    }
-
-    if (user.streak.lastQuizDate && hasStreakGap(user.streak.lastQuizDate)) {
-      user.streak.current = 0;
-      await user.save();
     }
 
     res.status(200).json({
@@ -127,7 +102,7 @@ export const getUserDetails = async (
 };
 
 export const updateUser = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -156,7 +131,7 @@ export const updateUser = async (
       filteredUpdateData.image = newImageUrl;
     }
 
-      await userModel.findByIdAndUpdate(userId, filteredUpdateData);
+    await userModel.findByIdAndUpdate(userId, filteredUpdateData);
 
     res.status(200).json({
       message: "User updated successfully",
@@ -169,7 +144,7 @@ export const updateUser = async (
 };
 
 export const deleteUser = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -177,10 +152,10 @@ export const deleteUser = async (
 
     await Quiz.deleteMany({ createdBy: userId });
 
-      const deletedUser = await userModel.findByIdAndDelete(userId);
-      if (!deletedUser) {
-        res.status(404).json({ message: "User not found" });
-        return;
+    const deletedUser = await userModel.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
     }
 
     res.status(200).json({ message: "User deleted successfully" });

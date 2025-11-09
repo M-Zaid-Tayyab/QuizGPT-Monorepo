@@ -1,18 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import userModel from "../models/userModel";
+import userModel, { IUserDocument } from "../models/userModel";
 
 interface UserJwtPayload {
   id: string;
 }
 
-export interface UnifiedAuthRequest extends Request {
-  user?: any;
+export interface AuthenticatedRequest extends Request {
+  user: IUserDocument;
   file?: Express.Multer.File;
 }
 
-export const protectUnified = async (
-  req: UnifiedAuthRequest,
+export const authenticate = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -24,19 +24,19 @@ export const protectUnified = async (
       return;
     }
 
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET!
-      ) as UserJwtPayload;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET!
+    ) as UserJwtPayload;
 
-      const user = await userModel.findById(decoded.id);
+    const user = await userModel.findById(decoded.id);
 
     if (!user) {
       res.status(401).json({ message: "User not found" });
       return;
     }
 
-    req.user = user;
+    (req as AuthenticatedRequest).user = user;
     next();
   } catch (error) {
     res.status(401).json({ message: "Not authorized" });

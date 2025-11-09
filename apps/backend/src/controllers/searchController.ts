@@ -1,10 +1,10 @@
 import { Response } from "express";
+import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import Deck from "../models/deckModel";
 import Quiz from "../models/quizModel";
-import { UnifiedAuthRequest } from "../middleware/unifiedAuthMiddleware";
 
 export const searchStudySets = async (
-  req: UnifiedAuthRequest,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -20,21 +20,16 @@ export const searchStudySets = async (
     }
 
     const searchQuery = q.trim();
-    const searchRegex = new RegExp(searchQuery, "i"); // Case-insensitive search
+    const searchRegex = new RegExp(searchQuery, "i");
 
-    // Search quizzes by description/title
     const quizzes = await Quiz.find({
       createdBy: userId,
-      $or: [
-        { description: searchRegex },
-        { title: searchRegex },
-      ],
+      $or: [{ description: searchRegex }, { title: searchRegex }],
     })
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
 
-    // Search flashcard decks by name
     const decks = await Deck.find({
       createdBy: userId,
       name: searchRegex,
@@ -44,7 +39,6 @@ export const searchStudySets = async (
       .limit(50)
       .lean();
 
-    // Format results with type indicator
     const results = [
       ...quizzes.map((quiz) => ({
         _id: quiz._id,
@@ -75,4 +69,3 @@ export const searchStudySets = async (
     res.status(500).json({ message: "Error searching study sets" });
   }
 };
-

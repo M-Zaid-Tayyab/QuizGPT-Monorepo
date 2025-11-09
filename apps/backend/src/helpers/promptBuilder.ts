@@ -12,7 +12,7 @@ export class PromptBuilder {
       user,
       examType = "general",
     } = options;
-    const { age, grade, gender } = user;
+    const { age, grade } = user;
 
     const distribution = this.calculateQuestionDistribution(
       numberOfQuestions,
@@ -23,7 +23,7 @@ export class PromptBuilder {
 
     return `Analyze the following study material/content and create a comprehensive ${
       examContext.title
-    } quiz designed to help a ${age}-year-old ${gender} student in ${grade} grade ACE their upcoming ${
+    } quiz designed to help a ${age ? `${age}-year-old ` : ""}student in ${grade} grade ACE their upcoming ${
       examContext.examName
     }.
 
@@ -39,7 +39,7 @@ ${examContext.instructions}
 📚 QUIZ CONFIGURATION:
 - Difficulty Level: ${difficulty.toUpperCase()} (matching exam standards)
 - Total Questions: ${numberOfQuestions}
-- Target Audience: ${age}-year-old ${gender} in ${grade} grade
+- Target Audience: ${age ? `${age}-year-old ` : ""}student in ${grade} grade
 - Question Types Selected: ${questionTypes.join(", ").toUpperCase()}
 
 📚 QUESTION DISTRIBUTION:
