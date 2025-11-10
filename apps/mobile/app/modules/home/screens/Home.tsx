@@ -118,27 +118,21 @@ const Home: React.FC = () => {
           }
         />
       ) : (
-        <View className="flex-1 items-center justify-center px-6 mb-12">
-          <View className="items-center mb-8">
-            <View className="w-24 h-24 rounded-3xl items-center justify-center mb-6 bg-primary/15">
-              <Ionicons
-                name="library-outline"
-                size={48}
-                color={colors.primary}
-              />
-            </View>
-            <Text className="text-2xl font-nunito-bold text-textPrimary mb-2 text-center">
-              Create Your First Study Set
-            </Text>
-            <Text className="text-base text-textSecondary font-nunito text-center mb-6 leading-6 max-w-xs">
-              Turn your study materials into study methods proven to work!
-            </Text>
-            <PrimaryButton
-              title="Get Started"
-              onPress={handleOpenFABMenu}
-              className="!bg-primary min-w-[200]"
-            />
+        <View className="flex-1 items-center justify-center mb-28 px-6">
+          <View className="w-24 h-24 rounded-3xl items-center justify-center mb-6 bg-primary/15">
+            <Ionicons name="library-outline" size={48} color={colors.primary} />
           </View>
+          <Text className="text-2xl font-nunito-bold text-textPrimary mb-2 text-center">
+            Create Your First Study Set
+          </Text>
+          <Text className="text-base text-textSecondary font-nunito text-center mb-6 leading-6 max-w-xs">
+            Turn your study materials into study methods proven to work!
+          </Text>
+          <PrimaryButton
+            title="Get Started"
+            onPress={handleOpenFABMenu}
+            className="w-full"
+          />
         </View>
       )}
       <AnimatedFAB

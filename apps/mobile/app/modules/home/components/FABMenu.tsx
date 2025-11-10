@@ -2,14 +2,7 @@ import colors from "@/app/constants/colors";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, Text, TouchableOpacity, View } from "react-native";
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeOut,
-  FadeOutUp,
-  ZoomIn,
-  ZoomOut,
-} from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 
 interface FABMenuOption {
   id: string;
@@ -41,8 +34,6 @@ const FABMenu: React.FC<FABMenuProps> = ({ visible, onClose, options }) => {
         style={{ zIndex: 999 }}
       >
         <Animated.View
-          entering={ZoomIn.duration(200).springify().damping(15).stiffness(200)}
-          exiting={ZoomOut.duration(0)}
           style={{
             position: "absolute",
             right: 20,
@@ -57,15 +48,7 @@ const FABMenu: React.FC<FABMenuProps> = ({ visible, onClose, options }) => {
           className="bg-white rounded-2xl overflow-hidden"
         >
           {options.map((option, index) => (
-            <Animated.View
-              key={option.id}
-              entering={FadeInDown.duration(250)
-                .delay(50 + index * 40)
-                .springify()
-                .damping(15)
-                .stiffness(200)}
-              exiting={FadeOutUp.duration(150)}
-            >
+            <Animated.View key={option.id} entering={FadeInDown.duration(200)}>
               <TouchableOpacity
                 onPress={() => {
                   option.onPress();
