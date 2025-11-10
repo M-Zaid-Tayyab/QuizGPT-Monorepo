@@ -46,7 +46,7 @@ export const useHome = () => {
     type: string;
   } | null>(null);
   const [activeCreateTab, setActiveCreateTab] = useState<"quiz" | "flashcards">(
-    "quiz"
+    "flashcards"
   );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -517,7 +517,7 @@ export const useHome = () => {
     return isGeneratingQuiz || isFlashcardsGenerating;
   }, [isGeneratingQuiz, isFlashcardsGenerating]);
 
-  const createTabs = useMemo(() => ["quiz", "flashcards"] as const, []);
+  const createTabs = useMemo(() => ["flashcards", "quiz"] as const, []);
 
   return {
     topicText,
