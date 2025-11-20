@@ -343,6 +343,15 @@ export const useHome = () => {
     createSheetRef.current?.present();
   };
 
+  const cameraOptions = useMemo(
+    () => ({
+      mediaType: "photo" as const,
+      compressImageQuality: 1.0,
+      forceJpg: true,
+    }),
+    []
+  );
+
   const pickFromGallery = useCallback(async () => {
     try {
       setIsFABMenuOpen(false);
@@ -371,23 +380,20 @@ export const useHome = () => {
       setIsFABMenuOpen(false);
 
       const image = await ImagePicker.openCamera({
-        width: 2000,
-        height: 2000,
-        cropping: true,
-        forceJpeg: true,
-        compressImageQuality: 0.9,
-        mediaType: "photo",
+        ...cameraOptions,
       });
 
-      handleFileSelected({
-        uri: image.path,
-        name: image.filename || `photo.jpg`,
-        type: image.mime || "image/jpeg",
-      });
+      if (image?.path) {
+        handleFileSelected({
+          uri: image.path,
+          name: image.filename || `photo.jpg`,
+          type: image.mime || "image/jpeg",
+        });
+      }
     } catch (error) {
       console.error("Camera picker error:", error);
     }
-  }, []);
+  }, [cameraOptions]);
 
   const pickDocument = useCallback(async () => {
     try {
