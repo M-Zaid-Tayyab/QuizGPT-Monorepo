@@ -1,3 +1,4 @@
+import UpdateBanner from "@/app/components/UpdateBanner";
 import { NavigationContainer } from "@react-navigation/native";
 import * as Sentry from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -95,6 +96,7 @@ const AppStack = () => {
             <SafeAreaProvider>
               <NavigationContainer>
                 <Stack />
+                <UpdateBanner />
                 <Toast
                   config={toastConfig}
                   topOffset={Platform.OS === "android" ? 30 : 90}

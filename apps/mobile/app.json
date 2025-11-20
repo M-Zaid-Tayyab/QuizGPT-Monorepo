@@ -18,6 +18,8 @@
         "NSPhotoLibraryUsageDescription": "This app uses the system photo picker to allow selecting images for generating quizzes and flashcards.",
         "NSCameraUsageDescription": "This app uses the camera to scan documents or images for generating quizzes and flashcards.",
         "NSMicrophoneUsageDescription": "Microphone access is used for optional audio features during study sessions.",
+        "NSSpeechRecognitionUsageDescription": "Speech recognition is used to enable voice-controlled study sessions and accessibility features.",
+        "NSPhotoLibraryAddUsageDescription": "This app saves generated study materials and quiz images to your photo library when you choose to export them.",
         "NSDocumentsFolderUsageDescription": "This app accesses your documents for uploading study materials."
       },
       "appleTeamId": "J35C3N342N"
@@ -95,13 +97,6 @@
           "project": "quizgpt",
           "organization": "zaid-4z"
         }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "The app accesses your photos to let you share them with your friends.",
-          "cameraPermission": "The app accesses your camera to let you take photos for generating quizzes and flashcards."
-        }
       ]
     ],
     "experiments": {
@@ -113,7 +108,7 @@
         "projectId": "8d9c1b42-a589-43da-8463-2a1932933d1f"
       }
     },
-    "owner": "expo_new_dev",
+    "owner": "zaid.dev",
     "runtimeVersion": {
       "policy": "appVersion"
     },
