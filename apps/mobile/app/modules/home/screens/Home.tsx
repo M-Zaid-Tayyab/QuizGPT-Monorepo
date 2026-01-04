@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { clsx } from "clsx";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { RefreshControl, Text, TouchableOpacity, View } from "react-native";
 
 import AnimatedLoadingModal from "@/app/components/AnimatedLoadingModal";
 import BottomSheetModal from "@/app/components/BottomSheetModal";
+import ChatWithFounderSheet from "@/app/components/ChatWithFounderSheet";
 import PrimaryButton from "@/app/components/PrimaryButton";
 import SkeletonPlaceholder from "@/app/components/SkeltonPlaceholder";
 import colors from "@/app/constants/colors";
@@ -16,6 +17,8 @@ import FlashcardCreateSheetContent from "@/app/modules/home/components/Flashcard
 import QuizCreateSheetContent from "@/app/modules/home/components/QuizCreateSheetContent";
 import SwipeableFeedItem from "@/app/modules/home/components/SwipeableFeedItem";
 import { FeedItem, useHome } from "@/app/modules/home/hooks/useHome";
+import { mmkv } from "@/app/storage/mmkv";
+import { BottomSheetModal as GorhomBottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 
 type NavigationProp = {
@@ -26,6 +29,7 @@ type NavigationProp = {
 const Home: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useUserStore();
+  const chatWithFounderRef = useRef<GorhomBottomSheetModal>(null);
   const {
     topicText,
     setTopicText,
@@ -75,6 +79,23 @@ const Home: React.FC = () => {
     []
   );
 
+  // Show chat sheet to new users on first visit
+  useEffect(() => {
+    if (!user || isLoading) return;
+
+    const isChatSheetShown = mmkv.getBoolean("isChatSheetShownToNewUser");
+
+    if (!isChatSheetShown) {
+      // Small delay to ensure UI is ready
+      const timer = setTimeout(() => {
+        chatWithFounderRef.current?.present();
+        mmkv.set("isChatSheetShownToNewUser", true);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user, isLoading]);
+
   return (
     <View className="flex-1 bg-background pt-safe">
       <View className="flex-row items-center justify-between px-5 pb-4">
@@ -89,13 +110,26 @@ const Home: React.FC = () => {
         <Text className="text-2xl font-nunito-bold text-textPrimary tracking-tight">
           All Study Sets
         </Text>
-        <TouchableOpacity
-          className="w-11 h-11 rounded-full bg-greyBackground items-center justify-center"
-          onPress={() => navigation.navigate("Search")}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="search" size={20} color={colors.textPrimary} />
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-2">
+          <TouchableOpacity
+            className="w-11 h-11 rounded-full bg-primary/10 items-center justify-center"
+            onPress={() => chatWithFounderRef.current?.present()}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="chatbubble-ellipses"
+              size={20}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="w-11 h-11 rounded-full bg-greyBackground items-center justify-center"
+            onPress={() => navigation.navigate("Search")}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="search" size={20} color={colors.textPrimary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isLoading || feed.length > 0 ? (
@@ -131,8 +165,23 @@ const Home: React.FC = () => {
           <PrimaryButton
             title="Get Started"
             onPress={handleOpenFABMenu}
-            className="w-full"
+            className="w-full mb-3"
           />
+          <TouchableOpacity
+            onPress={() => chatWithFounderRef.current?.present()}
+            className="w-full flex-row items-center justify-center py-3 px-4 rounded-xl bg-primary/5 border border-primary/20"
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="chatbubble-ellipses"
+              size={18}
+              color={colors.primary}
+              style={{ marginRight: 8 }}
+            />
+            <Text className="text-primary font-nunito-semibold text-base">
+              Chat with Founder
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
       <AnimatedFAB
@@ -200,6 +249,7 @@ const Home: React.FC = () => {
           )}
         </View>
       </BottomSheetModal>
+      <ChatWithFounderSheet ref={chatWithFounderRef} />
       <AnimatedLoadingModal isVisible={isAnyGenerating} />
     </View>
   );
