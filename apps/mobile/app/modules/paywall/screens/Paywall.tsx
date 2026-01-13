@@ -104,7 +104,7 @@ const Paywall: React.FC = () => {
   useEffect(() => {
     setTimeout(() => {
       setShowCloseButton(true);
-    }, 5000);
+    }, 15000);
   }, []);
 
   return (
