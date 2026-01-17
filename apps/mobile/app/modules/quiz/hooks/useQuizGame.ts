@@ -1,5 +1,7 @@
 import { sound } from "@/assets/sound";
+import { client } from "@/app/services";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
 import { useAudioPlayer } from "expo-audio";
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -35,9 +37,30 @@ export const useQuizGame = () => {
   const routeParams = route.params as any;
   const initialQuizData: QuizData = routeParams?.quizData;
   const isHistory = routeParams?.isHistory || false;
+  const quizId = initialQuizData?._id;
+
+  // Only fetch if coming from history AND questions are missing
+  const { data: fetchedQuizData, isLoading: isLoadingQuiz } = useQuery({
+    queryKey: ["quiz", quizId],
+    queryFn: async () => {
+      const response = await client.get(`quiz/${quizId}`);
+      return response.data;
+    },
+    enabled:
+      isHistory &&
+      !!quizId &&
+      (!initialQuizData?.questions || initialQuizData.questions.length === 0),
+  });
+
   const [quizData, setQuizData] = useState<QuizData | null>(
     initialQuizData || null
   );
+
+  useEffect(() => {
+    if (fetchedQuizData) {
+      setQuizData(fetchedQuizData);
+    }
+  }, [fetchedQuizData]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const selectedAnswers = useRef<any[]>([]);
@@ -385,12 +408,17 @@ export const useQuizGame = () => {
     ]
   );
 
+  const isLoading =
+    isLoadingQuiz &&
+    isHistory &&
+    (!quizData?.questions || quizData.questions.length === 0);
+
   return {
     quizData,
     isHistory,
     currentQuestion,
     currentQuestionIndex,
-
+    isLoading,
     selectedAnswer,
     isAnswerSubmitted,
     showResults,

@@ -21,9 +21,9 @@ interface FlashcardStudyProps {
   flashcards: Flashcard[];
   currentIndex: number;
   onRate: (response: "again" | "hard" | "good" | "easy") => void;
-  onNext: () => void;
-  onPrevious: () => void;
   onIndexChange: (index: number) => void;
+  deckName: string;
+  onBackPress: () => void;
   showRating?: boolean;
 }
 
@@ -33,13 +33,12 @@ const FlashcardStudy: React.FC<FlashcardStudyProps> = ({
   flashcards,
   currentIndex,
   onRate,
-  onNext,
-  onPrevious,
   onIndexChange,
+  deckName,
+  onBackPress,
   showRating = true,
 }) => {
   const totalCards = flashcards.length;
-  const isFirst = currentIndex === 0;
   const isLast = currentIndex === flashcards.length - 1;
   const [isFlipped, setIsFlipped] = useState(false);
   const [showRatingState, setShowRatingState] = useState(false);
@@ -131,30 +130,10 @@ const FlashcardStudy: React.FC<FlashcardStudyProps> = ({
         }
       }, ADVANCE_DELAY_MS);
     } else {
-      setTimeout(() => {
-        onNext();
-        ratingLockRef.current = false;
-      }, ADVANCE_DELAY_MS);
+      ratingLockRef.current = false;
     }
   };
 
-  const handleNext = () => {
-    setIsFlipped(false);
-    setShowConfidence(false);
-    setShowRatingState(false);
-    setConfidenceLevel(null);
-    flatListRef.current?.scrollToNext();
-    onNext();
-  };
-
-  const handlePrevious = () => {
-    setIsFlipped(false);
-    setShowConfidence(false);
-    setShowRatingState(false);
-    setConfidenceLevel(null);
-    flatListRef.current?.scrollToPrevious();
-    onPrevious();
-  };
 
   useEffect(() => {
     setIsFlipped(false);
@@ -166,12 +145,10 @@ const FlashcardStudy: React.FC<FlashcardStudyProps> = ({
   return (
     <View className="flex-1 bg-background py-safe">
       <FlashcardHeader
+        deckName={deckName}
         currentIndex={currentIndex}
         totalCards={totalCards}
-        isFirst={isFirst}
-        isLast={isLast}
-        onPrevious={handlePrevious}
-        onNext={handleNext}
+        onBackPress={onBackPress}
       />
 
       <View className="bg-greyBackground rounded-full h-1.5 mb-8 mx-4 mt-2">

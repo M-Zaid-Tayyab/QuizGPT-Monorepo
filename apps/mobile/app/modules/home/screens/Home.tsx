@@ -55,8 +55,11 @@ const Home: React.FC = () => {
     fabButtonOpacity,
     isFlashcardsGenerating,
     isAnyGenerating,
+    isGeneratingQuiz,
     createTabs,
     onDeleteItem,
+    loadMoreFeed,
+    isFetchingMoreFeed,
   } = useHome();
 
   const renderFeedItem = useCallback(
@@ -149,6 +152,16 @@ const Home: React.FC = () => {
               colors={[colors.primary]}
               tintColor={colors.primary}
             />
+          }
+          onEndReached={loadMoreFeed}
+          onEndReachedThreshold={0.5}
+          estimatedItemSize={80}
+          ListFooterComponent={
+            isFetchingMoreFeed ? (
+              <View className="py-4">
+                <SkeletonPlaceholder className="h-20 mb-3 rounded-lg bg-greyBackground mx-5" />
+              </View>
+            ) : null
           }
         />
       ) : (
@@ -250,7 +263,38 @@ const Home: React.FC = () => {
         </View>
       </BottomSheetModal>
       <ChatWithFounderSheet ref={chatWithFounderRef} />
-      <AnimatedLoadingModal isVisible={isAnyGenerating} />
+      <AnimatedLoadingModal
+        isVisible={isAnyGenerating}
+        messages={
+          isGeneratingQuiz
+            ? attachedFile
+              ? [
+                  "Extracting text from file...",
+                  "Analyzing content...",
+                  "Generating quiz questions...",
+                  "Almost done!",
+                ]
+              : [
+                  "Analyzing your topic...",
+                  "Generating quiz questions...",
+                  "Creating your quiz...",
+                  "Almost done!",
+                ]
+            : attachedFile
+            ? [
+                "Extracting text from file...",
+                "Generating flashcards...",
+                "Creating deck...",
+                "Almost done!",
+              ]
+            : [
+                "Analyzing content...",
+                "Generating flashcards...",
+                "Creating deck...",
+                "Almost done!",
+              ]
+        }
+      />
     </View>
   );
 };

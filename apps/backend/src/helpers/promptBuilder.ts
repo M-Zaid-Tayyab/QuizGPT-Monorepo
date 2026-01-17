@@ -21,28 +21,22 @@ export class PromptBuilder {
 
     const examContext = this.getExamTypeContext(examType);
 
-    return `Analyze the following study material/content and create a comprehensive ${
-      examContext.title
-    } quiz designed to help a ${age ? `${age}-year-old ` : ""}student in ${grade} grade ACE their upcoming ${
-      examContext.examName
-    }.
+    return `ROLE: You are an expert educational content creator specializing in exam preparation and assessment design.
+
+TASK: Create a comprehensive ${examContext.title} quiz designed to help a ${age ? `${age}-year-old ` : ""}student in ${grade} grade ACE their upcoming ${examContext.examName}.
 
 STUDY MATERIAL/CONTENT TO ANALYZE:
 ${description}
 
 🎯 IMPORTANT: Generate a concise, descriptive title (max 60 characters) that accurately reflects the MAIN TOPIC/CONCEPT from the actual content above. The title should be based on analyzing the content, not just copying user instructions.
 
-Please respond with a valid JSON object containing the quiz questions.
-
-${examContext.instructions}
-
-📚 QUIZ CONFIGURATION:
+CONFIGURATION:
 - Difficulty Level: ${difficulty.toUpperCase()} (matching exam standards)
 - Total Questions: ${numberOfQuestions}
 - Target Audience: ${age ? `${age}-year-old ` : ""}student in ${grade} grade
 - Question Types Selected: ${questionTypes.join(", ").toUpperCase()}
 
-📚 QUESTION DISTRIBUTION:
+QUESTION DISTRIBUTION:
 ${this.formatQuestionDistribution(distribution)}
 
 🚨🚨🚨 CRITICAL INSTRUCTION - READ CAREFULLY 🚨🚨🚨
@@ -57,6 +51,44 @@ FORBIDDEN: Do NOT generate "mcq" questions unless explicitly listed in the distr
 FORBIDDEN: Do NOT generate any question types not mentioned in the distribution above.
 
 FOLLOW THE DISTRIBUTION EXACTLY - NO EXCEPTIONS!
+
+${examContext.instructions}
+
+COGNITIVE LEVELS (Bloom's Taxonomy):
+- Include a balanced mix of cognitive levels:
+  * Recall (20%): Remember facts, definitions, basic concepts
+  * Understanding (40%): Explain concepts, compare, interpret
+  * Application (30%): Use knowledge in new situations, solve problems
+  * Analysis (10%): Break down complex ideas, identify relationships
+- Questions should test UNDERSTANDING, not just memorization
+- Create questions that require CRITICAL THINKING and problem-solving
+- Focus on CONCEPTS that are frequently tested in exams
+
+FEW-SHOT EXAMPLES:
+
+Example MCQ (Multiple Choice):
+{
+  "question": "Which process converts sunlight into chemical energy in plants?",
+  "questionType": "mcq",
+  "options": ["Photosynthesis", "Respiration", "Transpiration", "Fermentation"],
+  "correctAnswer": 0
+}
+
+Example True/False:
+{
+  "question": "Mitochondria are found in both plant and animal cells.",
+  "questionType": "true_false",
+  "options": ["True", "False"],
+  "correctAnswer": 0
+}
+
+Example Fill-in-the-blank:
+{
+  "question": "The process by which plants convert carbon dioxide and water into glucose using sunlight is called _____.",
+  "questionType": "fill_blank",
+  "options": ["photosynthesis"],
+  "correctAnswer": 0
+}
 
 📝 EXAM-STYLE QUESTION GUIDELINES:
 - Make questions CHALLENGING but fair (like real exams)
@@ -91,6 +123,13 @@ FOLLOW THE DISTRIBUTION EXACTLY - NO EXCEPTIONS!
 - For fill_blank questions, options array must contain ONLY the correct answer
 - For true_false questions, options must be exactly ["True", "False"]
 - For MCQ questions, options must be exactly 4 different choices
+
+✅ QUALITY CHECKLIST:
+- Clarity: Questions are unambiguous and easy to understand
+- Accuracy: All information is factually correct
+- Pedagogical Value: Questions promote learning and understanding
+- Appropriate Difficulty: Matches the specified difficulty level
+- Exam Relevance: Questions mirror actual exam patterns
 
 📋 RESPONSE FORMAT:
 Return a JSON object with this EXACT structure:

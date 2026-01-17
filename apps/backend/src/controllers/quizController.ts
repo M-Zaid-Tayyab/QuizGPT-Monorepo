@@ -14,6 +14,8 @@ dotenv.config();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: 60000,
+  maxRetries: 2,
 });
 
 interface QuestionAnswer {
@@ -138,6 +140,7 @@ export const generateCustomQuiz = async (
       messages: [{ role: "user", content: prompt }],
       model: "gpt-3.5-turbo",
       response_format: { type: "json_object" },
+      temperature: 0.4, // Lower temperature for more consistent, accurate educational content
     });
 
     if (!completion.choices[0].message.content) {
@@ -244,20 +247,64 @@ export const getQuizHistory = async (
 ): Promise<void> => {
   try {
     const userId = req.user._id;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
 
-    const quizzes = await Quiz.find({
-      createdBy: userId,
-    }).sort({
-      createdAt: -1,
-    });
+    const [quizzes, totalQuizzes] = await Promise.all([
+      Quiz.find({
+        createdBy: userId,
+      })
+        .select("_id title description createdAt")
+        .sort({
+          createdAt: -1,
+        })
+        .skip(skip)
+        .limit(limit),
+      Quiz.countDocuments({
+        createdBy: userId,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalQuizzes / limit);
+    const hasMore = page < totalPages;
 
     res.status(200).json({
       quizzes,
-      totalQuizzes: quizzes.length,
+      totalQuizzes,
+      page,
+      limit,
+      totalPages,
+      hasMore,
     });
   } catch (error) {
     console.error("Error fetching quiz history:", error);
     res.status(500).json({ message: "Error fetching quiz history" });
+  }
+};
+
+export const getQuizById = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user._id;
+    const { quizId } = req.params;
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      createdBy: userId,
+    });
+
+    if (!quiz) {
+      res.status(404).json({ message: "Quiz not found" });
+      return;
+    }
+
+    res.status(200).json(quiz);
+  } catch (error) {
+    console.error("Error fetching quiz:", error);
+    res.status(500).json({ message: "Error fetching quiz" });
   }
 };
 

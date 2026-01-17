@@ -4,6 +4,7 @@ import express from "express";
 import connectDB from "./config/db";
 import appFlagsRoutes from "./routes/appFlags";
 import authRoutes from "./routes/authRoutes";
+import feedRoutes from "./routes/feedRoutes";
 import flashcardRoutes from "./routes/flashcardRoutes";
 import quizRoutes from "./routes/quizRoutes";
 import searchRoutes from "./routes/searchRoutes";
@@ -22,5 +23,6 @@ app.use("/api/quiz", quizRoutes);
 app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/app-flags", appFlagsRoutes);
+app.use("/api/feed", feedRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

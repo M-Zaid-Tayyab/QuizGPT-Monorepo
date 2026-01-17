@@ -56,7 +56,11 @@ export const generateFlashcards = async (
       generatedFrom: "text",
     };
 
-    const flashcards = await FlashcardGenerator.generateFromText(text, options);
+    // Parallelize AI calls for better performance
+    const [flashcards, deckMeta] = await Promise.all([
+      FlashcardGenerator.generateFromText(text, options),
+      FlashcardGenerator.generateDeckMeta(text, options),
+    ]);
 
     if (flashcards.length === 0) {
       res.status(400).json({
@@ -76,9 +80,6 @@ export const generateFlashcards = async (
         })
       )
     );
-
-    // Create a new deck with AI-generated meta
-    const deckMeta = await FlashcardGenerator.generateDeckMeta(text, options);
     const deck = await Deck.create({
       name: deckMeta.name,
       description: deckMeta.description,
@@ -151,7 +152,11 @@ export const generateFlashcardsFromFile = async (
       generatedFrom: requestData.file ? "pdf" : "text",
     };
 
-    const flashcards = await FlashcardGenerator.generateFromText(text, options);
+    // Parallelize AI calls for better performance
+    const [flashcards, deckMeta] = await Promise.all([
+      FlashcardGenerator.generateFromText(text, options),
+      FlashcardGenerator.generateDeckMeta(text, options),
+    ]);
 
     if (flashcards.length === 0) {
       res
@@ -171,9 +176,6 @@ export const generateFlashcardsFromFile = async (
         })
       )
     );
-
-    // Create a new deck with AI-generated meta
-    const deckMeta = await FlashcardGenerator.generateDeckMeta(text, options);
     const deck = await Deck.create({
       name: deckMeta.name,
       description: deckMeta.description,

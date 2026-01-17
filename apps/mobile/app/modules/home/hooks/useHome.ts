@@ -3,11 +3,16 @@ import { useFlashcardAPI } from "@/app/modules/flashcards/hooks/useFlashcardAPI"
 import { client, formDataClient } from "@/app/services";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useNavigation } from "@react-navigation/native";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import * as DocumentPicker from "expo-document-picker";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard } from "react-native";
 import ImagePicker from "react-native-image-crop-picker";
+import { formatDate } from "../utils/dateUtils";
 import { useDeleteDeck, useDeleteQuiz } from "./useFeedItemDelete";
 
 type NavigationProp = {
@@ -53,84 +58,66 @@ export const useHome = () => {
   const [isFABMenuOpen, setIsFABMenuOpen] = useState(false);
   const createSheetRef = useRef<BottomSheetModal>(null);
 
-  const { data: history, isLoading: historyLoading } = useQuery({
-    queryKey: ["history"],
-    queryFn: async () => (await client.get("quiz/history")).data,
+  const queryClient = useQueryClient();
+
+  const {
+    data: feedData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["feed"],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await client.get("feed", {
+        params: { page: pageParam, limit: 20 },
+      });
+      return response.data;
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.page + 1 : undefined,
+    initialPageParam: 1,
     staleTime: 0,
   });
 
   const {
-    useUserDecks,
     generateFlashcards,
     generateFlashcardsFromFile,
-    queryClient,
     generateFlashcardsMutation,
     generateFlashcardsFromFileMutation,
   } = useFlashcardAPI();
-  const { data: decksData, isLoading: decksLoading } = useUserDecks();
 
   const deleteQuizMutation = useDeleteQuiz();
   const deleteDeckMutation = useDeleteDeck();
 
-  const isLoading = historyLoading || decksLoading;
-
   const refreshFeed = async () => {
     try {
       setIsRefreshing(true);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["history"] }),
-        queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] }),
-      ]);
+      await queryClient.invalidateQueries({ queryKey: ["feed"] });
     } finally {
       setIsRefreshing(false);
     }
   };
 
-  const feed: FeedItem[] = useMemo(() => {
-    const formatDate = (dateString: string): string => {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "Invalid Date";
-      return date.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      });
-    };
+  const loadMoreFeed = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    const quizItems: FeedItem[] = (history?.quizzes || []).map(
-      (quiz: {
-        _id: string;
-        title?: string;
-        description?: string;
-        createdAt: string;
-      }) => ({
-        _id: quiz._id,
-        title: quiz.title?.trim() || quiz.description?.trim() || "Quiz",
-        createdAt: quiz.createdAt,
-        formattedDate: formatDate(quiz.createdAt),
-        type: "quiz" as const,
-        raw: quiz,
-      })
-    );
-    const deckItems: FeedItem[] = (decksData?.decks || []).map(
-      (deck: { _id: string; name: string; createdAt: string }) => ({
-        _id: deck._id,
-        title: deck.name,
-        createdAt: deck.createdAt,
-        formattedDate: formatDate(deck.createdAt),
-        type: "deck" as const,
-        raw: deck,
-      })
-    );
-    return [...quizItems, ...deckItems].sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      if (isNaN(dateA) && isNaN(dateB)) return 0;
-      if (isNaN(dateA)) return 1;
-      if (isNaN(dateB)) return -1;
-      return dateB - dateA;
-    });
-  }, [history, decksData]);
+  const feed: FeedItem[] = useMemo(() => {
+    if (!feedData?.pages) return [];
+    return feedData.pages
+      .flatMap((page) => page.items)
+      .map((item) => ({
+        _id: item._id,
+        title: item.title,
+        createdAt: item.createdAt,
+        formattedDate: formatDate(item.createdAt),
+        type: item.type,
+        raw: item,
+      }));
+  }, [feedData]);
 
   useEffect(() => {
     const keyboardWillHideListener = Keyboard.addListener(
@@ -211,7 +198,7 @@ export const useHome = () => {
   const generateQuizMutation = useMutation({
     mutationFn: createQuiz,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["history"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
       navigation.navigate("Quiz", { quizData: data });
     },
   });
@@ -225,7 +212,7 @@ export const useHome = () => {
       numberOfQuestions: number,
       examType?: string
     ) => {
-      if (!user?.isProUser && feed?.length > 0) {
+      if (!user?.isProUser) {
         navigation.navigate("Paywall");
         return;
       }
@@ -240,12 +227,12 @@ export const useHome = () => {
         file: attachedFile,
       });
     },
-    [topicText, attachedFile, generateQuizMutation, user, feed, navigation]
+    [topicText, attachedFile, generateQuizMutation, user, navigation]
   );
 
   const handleGenerateFlashcards = useCallback(
     async (data: GenerateFlashcardsData) => {
-      if (!user?.isProUser && feed?.length > 0) {
+      if (!user?.isProUser) {
         navigation.navigate("Paywall");
         return;
       }
@@ -264,7 +251,7 @@ export const useHome = () => {
             ...result.deck,
             flashcards: result.flashcards,
           };
-          queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+          queryClient.invalidateQueries({ queryKey: ["feed"] });
           navigation.navigate("FlashcardScreen", { deck: completeDeck });
         }
       } catch (error: any) {
@@ -280,7 +267,6 @@ export const useHome = () => {
       queryClient,
       navigation,
       user,
-      feed,
     ]
   );
 
@@ -303,13 +289,16 @@ export const useHome = () => {
       if (item.type === "quiz") {
         deleteQuizMutation.mutate(item._id, {
           onSuccess: () => {
-            queryClient.setQueryData(["history"], (oldData: any) => {
-              if (!oldData) return oldData;
+            queryClient.setQueryData(["feed"], (oldData: any) => {
+              if (!oldData?.pages) return oldData;
               return {
                 ...oldData,
-                quizzes: oldData.quizzes.filter(
-                  (quiz: any) => quiz._id !== item._id
-                ),
+                pages: oldData.pages.map((page: any) => ({
+                  ...page,
+                  items: page.items.filter(
+                    (feedItem: any) => feedItem._id !== item._id
+                  ),
+                })),
               };
             });
           },
@@ -317,13 +306,16 @@ export const useHome = () => {
       } else if (item.type === "deck") {
         deleteDeckMutation.mutate(item._id, {
           onSuccess: () => {
-            queryClient.setQueryData(["flashcard-decks"], (oldData: any) => {
-              if (!oldData) return oldData;
+            queryClient.setQueryData(["feed"], (oldData: any) => {
+              if (!oldData?.pages) return oldData;
               return {
                 ...oldData,
-                decks: oldData.decks.filter(
-                  (deck: any) => deck._id !== item._id
-                ),
+                pages: oldData.pages.map((page: any) => ({
+                  ...page,
+                  items: page.items.filter(
+                    (feedItem: any) => feedItem._id !== item._id
+                  ),
+                })),
               };
             });
           },
@@ -558,6 +550,8 @@ export const useHome = () => {
     isAnyGenerating,
     createTabs,
     onDeleteItem,
+    loadMoreFeed,
+    isFetchingMoreFeed: isFetchingNextPage,
   };
 };
 

@@ -27,7 +27,7 @@ const Stack = () => {
           animation: Platform.OS === "android" ? "fade" : "default",
         }}
         initialRouteName={
-          isAuthorized ? (user?.isProUser ? "Main" : "Main") : "Auth"
+          isAuthorized ? (user?.isProUser ? "Main" : "Paywall") : "Auth"
         }
       >
         <stack.Screen name="Auth" component={AuthStack} />

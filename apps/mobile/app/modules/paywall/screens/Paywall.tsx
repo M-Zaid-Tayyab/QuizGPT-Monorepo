@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React from "react";
+import { ScrollView, Text, View } from "react-native";
 
 import PrimaryButton from "@/app/components/PrimaryButton";
 import colors from "@/app/constants/colors";
@@ -24,7 +24,6 @@ const Paywall: React.FC = () => {
     isPurchasing,
     showWeeklyCalculation,
   } = usePaywall();
-  const [showCloseButton, setShowCloseButton] = useState(false);
 
   const features = [
     {
@@ -55,17 +54,6 @@ const Paywall: React.FC = () => {
         "Build comprehensive study materials tailored to your course and exam style.",
     },
   ];
-
-  const handleClose = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      (navigation as any).reset({
-        index: 0,
-        routes: [{ name: "Main" }],
-      });
-    }
-  };
 
   const handlePlanSelect = (packageId: string) => {
     const pkg = packages.find((p) => p.identifier === packageId);
@@ -101,12 +89,6 @@ const Paywall: React.FC = () => {
     return undefined;
   };
 
-  useEffect(() => {
-    setTimeout(() => {
-      setShowCloseButton(true);
-    }, 15000);
-  }, []);
-
   return (
     <ScrollView
       className="flex-1 bg-background"
@@ -123,13 +105,7 @@ const Paywall: React.FC = () => {
             <Text className="text-white text-xl font-nunito-bold">Pro</Text>
           </View>
         </View>
-        {showCloseButton ? (
-          <TouchableOpacity onPress={handleClose}>
-            <Ionicons name="close" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-        ) : (
-          <View className="w-6" />
-        )}
+        <View className="w-6" />
       </View>
 
       <View className="mt-10">
