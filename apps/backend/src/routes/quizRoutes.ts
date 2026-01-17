@@ -4,10 +4,11 @@ import {
   deleteQuiz,
   explainAnswer,
   generateCustomQuiz,
+  getQuizById,
   getQuizHistory,
   submitQuizResult,
 } from "../controllers/quizController";
-import { authenticate } from "../middleware/authMiddleware";
+import { authenticate, AuthenticatedRequest } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
@@ -28,7 +29,7 @@ const upload = multer({
 });
 
 const handleMulterError = (
-  error: any,
+  error: unknown,
   req: express.Request,
   res: express.Response,
   next: express.NextFunction
@@ -44,7 +45,7 @@ const handleMulterError = (
     return;
   }
 
-  if (error) {
+  if (error instanceof Error) {
     res.status(400).json({ message: error.message });
     return;
   }
@@ -68,6 +69,7 @@ router.post(
 );
 router.post("/submit", authenticate as any, submitQuizResult as any);
 router.get("/history", authenticate as any, getQuizHistory as any);
+router.get("/:quizId", authenticate as any, getQuizById as any);
 router.post("/explain-answer", authenticate as any, explainAnswer as any);
 router.delete("/:quizId", authenticate as any, deleteQuiz as any);
 

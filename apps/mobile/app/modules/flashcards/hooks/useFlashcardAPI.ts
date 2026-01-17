@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { client, formDataClient } from "../../../services";
 
 interface GenerateFlashcardsData {
@@ -15,15 +15,6 @@ interface GenerateFlashcardsResponse {
   count: number;
 }
 
-interface GetDecksResponse {
-  decks: any[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
-}
 
 export const useFlashcardAPI = () => {
   const queryClient = useQueryClient();
@@ -35,7 +26,7 @@ export const useFlashcardAPI = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
     },
   });
 
@@ -50,7 +41,7 @@ export const useFlashcardAPI = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
     },
   });
 
@@ -62,25 +53,10 @@ export const useFlashcardAPI = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
     },
   });
 
-  const getUserDecks = async (): Promise<GetDecksResponse> => {
-    const response = await client.get("flashcards/decks");
-    return response.data;
-  };
-
-  const useUserDecks = () => {
-    return useQuery({
-      queryKey: ["flashcard-decks"],
-      queryFn: getUserDecks,
-      staleTime: 60_000,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    });
-  };
 
   const createDeckMutation = useMutation({
     mutationFn: async (data: {
@@ -94,7 +70,7 @@ export const useFlashcardAPI = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flashcard-decks"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
     },
   });
 
@@ -147,12 +123,9 @@ export const useFlashcardAPI = () => {
     generateFlashcardsFromQuizMutation,
     createDeckMutation,
 
-    useUserDecks,
-
     generateFlashcards,
     generateFlashcardsFromFile,
     generateFlashcardsFromQuiz,
-    getUserDecks,
     createDeck,
     getDeckFlashcards,
   };

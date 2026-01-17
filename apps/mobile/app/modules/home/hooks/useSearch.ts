@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
 import { client } from "@/app/services";
+import { formatDate } from "../utils/dateUtils";
 import { useDeleteDeck, useDeleteQuiz } from "./useFeedItemDelete";
 import type { FeedItem } from "./useHome";
 
@@ -83,16 +84,6 @@ export const useSearch = () => {
     },
     [deleteQuizMutation, deleteDeckMutation, queryClient]
   );
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Invalid Date";
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   const filteredFeed: FeedItem[] = (searchResults?.results || []).map(
     (item: any) => ({

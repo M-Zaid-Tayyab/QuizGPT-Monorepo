@@ -1,6 +1,8 @@
 import Header from "@/app/components/Header";
-import colors from "@/app/constants/colors";
+import SkeletonPlaceholder from "@/app/components/SkeltonPlaceholder";
+import { client } from "@/app/services";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useState } from "react";
 import { Text, View } from "react-native";
 import FlashcardStudy from "../components/FlashcardStudy";
@@ -23,25 +25,28 @@ interface Deck {
 const FlashcardScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { deck } = route.params as { deck: Deck };
+  const { deck: initialDeck } = route.params as { deck: Deck };
+  const deckId = initialDeck._id;
+  const { data: deckData, isLoading: isLoadingDeck } = useQuery({
+    queryKey: ["deck", deckId],
+    queryFn: async () => {
+      const response = await client.get(
+        `flashcards/decks/${deckId}/flashcards`
+      );
+      return {
+        deck: response.data.deck,
+        flashcards: response.data.flashcards,
+      };
+    },
+    enabled:
+      !!deckId &&
+      (!initialDeck.flashcards || initialDeck.flashcards.length === 0),
+  });
 
+  const deck = deckData?.deck || initialDeck;
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const studyCards = (deck.flashcards || []) as Flashcard[];
-
-  const handlePrevious = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  }, [currentIndex]);
-
-  const handleNext = useCallback(() => {
-    if (currentIndex < studyCards.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      navigation.goBack();
-    }
-  }, [currentIndex, studyCards.length, navigation]);
 
   const handleRate = useCallback(
     (response: "again" | "hard" | "good" | "easy") => {
@@ -56,6 +61,21 @@ const FlashcardScreen: React.FC = () => {
   const handleExit = () => {
     navigation.goBack();
   };
+
+  if (isLoadingDeck) {
+    return (
+      <View className="flex-1 bg-background pt-safe px-6">
+        <View className="flex-row justify-between py-4">
+          <SkeletonPlaceholder className="h-10 w-12 rounded-lg" />
+          <SkeletonPlaceholder className="h-10 w-48 rounded-lg" />
+          <SkeletonPlaceholder className="h-10 w-12 rounded-lg" />
+        </View>
+        <View className="flex-1 items-center justify-center">
+          <SkeletonPlaceholder className="h-72 w-full rounded-2xl mb-4" />
+        </View>
+      </View>
+    );
+  }
 
   if (studyCards.length === 0) {
     return (
@@ -72,18 +92,13 @@ const FlashcardScreen: React.FC = () => {
 
   return (
     <View className="flex-1 bg-background">
-      <Header
-        onBackPress={handleExit}
-        backIconColor={colors.textPrimary}
-        title={deck.name}
-      />
       <FlashcardStudy
         flashcards={studyCards}
         currentIndex={currentIndex}
         onRate={handleRate}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
         onIndexChange={setCurrentIndex}
+        deckName={deck.name}
+        onBackPress={handleExit}
         showRating={true}
       />
     </View>

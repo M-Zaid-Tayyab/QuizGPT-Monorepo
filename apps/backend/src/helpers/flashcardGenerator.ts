@@ -2,6 +2,8 @@ import { OpenAI } from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: 60000, // 60 seconds timeout
+  maxRetries: 2,
 });
 
 export interface FlashcardOptions {
@@ -70,7 +72,12 @@ export class FlashcardGenerator {
     options: FlashcardOptions
   ): Promise<{ name: string; description: string }> {
     const { category, count } = options;
-    const metaPrompt = `Analyze the following study material and generate a concise deck title and a short, relevant description based on the ACTUAL CONTENT.
+    const metaPrompt = `ROLE: You are an expert at analyzing educational content and creating meaningful titles and descriptions.
+
+TASK: Analyze the following study material and generate a concise deck title and a short, relevant description based on the ACTUAL CONTENT.
+
+STUDY MATERIAL (truncate if long):
+${text.slice(0, 1200)}
 
 REQUIREMENTS:
 - Title: <= 60 characters, specific to the content (no generic words like "Flashcards" unless useful)
@@ -80,11 +87,13 @@ REQUIREMENTS:
 CATEGORY CONTEXT: ${category} (use as hint, but analyze content to determine actual topic)
 TARGET CARD COUNT: ${count}
 
-STUDY MATERIAL (truncate if long):\n${text.slice(0, 1200)}
-
 🎯 IMPORTANT: Generate the title by ANALYZING the study material content above, not by copying the category. Extract the actual topic/subject from the content.
 
-Return strict JSON with keys: {"name": string, "description": string}`;
+RESPONSE (JSON only):
+{
+  "name": "Specific topic title from content analysis",
+  "description": "One sentence describing what this deck covers"
+}`;
 
     try {
       const completion = await openai.chat.completions.create({
@@ -126,7 +135,9 @@ Return strict JSON with keys: {"name": string, "description": string}`;
     const { difficulty, category, count, user } = options;
     const { age, grade } = user;
 
-    return `Generate ${count} high-quality flashcards from this study material for a ${age ? `${age}-year-old ` : ""}student in ${grade} grade.
+    return `ROLE: You are an expert educational content creator specializing in creating effective study materials for spaced repetition learning.
+
+TASK: Generate ${count} high-quality flashcards from this study material for a ${age ? `${age}-year-old ` : ""}student in ${grade} grade.
 
 STUDY MATERIAL:
 ${text}
@@ -136,14 +147,23 @@ DIFFICULTY: ${difficulty}
 CATEGORY: ${category}
 TOTAL FLASHCARDS: ${count}
 
-Please respond with a valid JSON object containing the flashcards.
+MINIMUM INFORMATION PRINCIPLE:
+- Each flashcard should focus on ONE key concept, term, or idea
+- Avoid cramming multiple concepts into a single card
+- Make each card independent and self-contained
+- Cards should be easy to recall and review
 
 🎯 FLASHCARD GUIDELINES:
 - Front: Concise question, term, or concept (max 100 characters)
+  * Use clear, direct language
+  * Focus on what the student needs to recall
+  * Avoid unnecessary words
 - Back: Clear, detailed answer with examples (max 200 characters)
+  * Provide context and examples when helpful
+  * Include memory aids, mnemonics, or connections when relevant
+  * Make answers comprehensive but concise
 - Focus on KEY CONCEPTS that are commonly tested
 - Use EXAM-STYLE language and terminology
-- Include memory aids, mnemonics, or examples when helpful
 - Make each card independent and self-contained
 - Vary difficulty within the specified range
 
@@ -153,21 +173,35 @@ Please respond with a valid JSON object containing the flashcards.
 - Use clear, unambiguous language
 - Provide context and examples in answers
 - Make cards challenging but fair
+- Ensure accuracy - all information must be factually correct
 
 🏷️ TAGGING SYSTEM:
 - Add 2-3 relevant tags per card
 - Use academic subject tags (e.g., "biology", "math", "history")
 - Include difficulty tags (e.g., "basic", "intermediate", "advanced")
 - Add topic-specific tags when relevant
+- Tags help organize and filter cards for study
+
+FEW-SHOT EXAMPLE:
+
+Example Flashcard:
+{
+  "front": "What is photosynthesis?",
+  "back": "The process by which plants convert sunlight into energy, using carbon dioxide and water to produce glucose and oxygen. Essential for life on Earth.",
+  "difficulty": "Medium",
+  "category": "${category}",
+  "tags": ["biology", "plants", "energy", "photosynthesis"]
+}
 
 JSON RESPONSE FORMAT:
 {
   "flashcards": [
     {
-      "front": "What is photosynthesis?",
-      "back": "The process by which plants convert sunlight into energy, using carbon dioxide and water to produce glucose and oxygen. Essential for life on Earth.",
-      "difficulty": "Medium",
-      "tags": ["biology", "plants", "energy", "photosynthesis"]
+      "front": "Question or term (max 100 chars)",
+      "back": "Detailed answer with examples (max 200 chars)",
+      "difficulty": "Easy|Medium|Hard",
+      "category": "${category}",
+      "tags": ["tag1", "tag2", "tag3"]
     }
   ]
 }

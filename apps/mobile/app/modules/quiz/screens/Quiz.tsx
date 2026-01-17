@@ -1,8 +1,9 @@
+import SkeletonPlaceholder from "@/app/components/SkeltonPlaceholder";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { useNavigation } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useRef, useState } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import Animated from "react-native-reanimated";
 import useQuiz from "../../home/hooks/useQuiz";
 import {
@@ -30,6 +31,7 @@ const Quiz: React.FC = () => {
     isHistory,
     currentQuestion,
     currentQuestionIndex,
+    isLoading,
     selectedAnswer,
     isAnswerSubmitted,
     showResults,
@@ -102,10 +104,25 @@ const Quiz: React.FC = () => {
     );
   }
 
-  if (!quizData || !quizData.questions || quizData.questions.length === 0) {
+  if (isLoading || !quizData || !quizData.questions) {
     return (
-      <View className="flex-1 bg-background py-safe px-4 justify-center items-center">
-        <Text className="text-lg text-textPrimary">Loading quiz...</Text>
+      <View className="flex-1 bg-background py-safe px-4">
+        <View className="flex-row justify-between py-4">
+          <SkeletonPlaceholder className="h-8 w-8 rounded-lg" />
+          <SkeletonPlaceholder className="h-8 w-48 rounded-lg" />
+          <SkeletonPlaceholder className="h-8 w-12 rounded-lg" />
+        </View>
+
+        <View className="mb-8 mt-24">
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonPlaceholder
+              key={i}
+              className="h-16 w-full rounded-lg mb-3"
+            />
+          ))}
+        </View>
+
+        <SkeletonPlaceholder className="h-14 w-full rounded-lg" />
       </View>
     );
   }
