@@ -1,5 +1,9 @@
+export { default as ChipsQuestion } from "./ChipsQuestion";
+export { default as MultiSelectQuestion } from "./MultiSelectQuestion";
 export { default as OptionItem } from "./OptionItem";
 export { default as ProgressBar } from "./ProgressBar";
 export { default as QuestionCard } from "./QuestionCard";
+export { default as ReviewRequestScreen } from "./ReviewRequestScreen";
+export { default as SliderQuestion } from "./SliderQuestion";
 export { default as TextInputQuestion } from "./TextInputQuestion";
 export { default as WelcomeScreen } from "./WelcomeScreen";

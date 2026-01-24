@@ -26,6 +26,32 @@ export const socialLogin = async (
       $or: [{ email }, { socialId, socialType }],
     });
 
+    // Helper to apply onboarding data
+    const applyOnboardingData = (target: any, data: any) => {
+        if (!data) return;
+        
+        const fields = [
+            "motivation", "studyConfidence", "studyChallenges", "studyFrequency",
+            "mainGoal", "learningStyle", "studyMaterials", "difficultSubjects",
+            "procrastinationLevel", "examTimeline", "activeRecallExperience",
+            "spacedRepetitionExperience", "studyEnvironment", "focusDuration",
+            "socialPreference", "toolsUsed", "motivationFactors", "appExpectations",
+            "featureInterest", "commitmentLevel", "age"
+        ];
+        
+        fields.forEach(field => {
+            if (data[field] !== undefined) {
+                target[field] = data[field];
+            }
+        });
+
+        // Legacy/Computed fields mapping (for backward compatibility or if frontend still sends them differently)
+        if (data.studyChallenges && data.studyChallenges.length > 0) target.biggestChallenge = data.studyChallenges[0];
+        if (data.learningStyle && data.learningStyle.length > 0) target.studyMethod = data.learningStyle[0];
+        if (data.difficultSubjects && data.difficultSubjects.length > 0) target.strugglingSubjects = data.difficultSubjects[0];
+        if (data.studyConfidence) target.examConfidence = data.studyConfidence > 7 ? 'very_confident' : 'somewhat_confident'; 
+    };
+
     if (user) {
       if (!user.socialId) {
         user.socialId = socialId;
@@ -33,15 +59,7 @@ export const socialLogin = async (
         user.isSocialAuth = true;
       }
 
-      if (onboardingData) {
-        user.biggestChallenge = onboardingData.biggestChallenge;
-        user.studyMethod = onboardingData.studyMethod;
-        user.examConfidence = onboardingData.examConfidence;
-        user.studyMaterials = onboardingData.studyMaterials;
-        user.age = onboardingData.age;
-        user.strugglingSubjects = onboardingData.strugglingSubjects;
-        user.studyNeeds = onboardingData.studyNeeds;
-      }
+      applyOnboardingData(user, onboardingData);
 
       await user.save();
     } else {
@@ -53,15 +71,7 @@ export const socialLogin = async (
         isSocialAuth: true,
       };
 
-      if (onboardingData) {
-        userData.biggestChallenge = onboardingData.biggestChallenge;
-        userData.studyMethod = onboardingData.studyMethod;
-        userData.examConfidence = onboardingData.examConfidence;
-        userData.studyMaterials = onboardingData.studyMaterials;
-        userData.age = onboardingData.age;
-        userData.strugglingSubjects = onboardingData.strugglingSubjects;
-        userData.studyNeeds = onboardingData.studyNeeds;
-      }
+      applyOnboardingData(userData, onboardingData);
 
       user = await userModel.create(userData);
     }
@@ -131,11 +141,13 @@ export const updateUser = async (
       filteredUpdateData.image = newImageUrl;
     }
 
-    await userModel.findByIdAndUpdate(userId, filteredUpdateData);
+    // Use findByIdAndUpdate to return the updated document
+    const updatedUser = await userModel.findByIdAndUpdate(userId, filteredUpdateData, { new: true });
 
     res.status(200).json({
       message: "User updated successfully",
       updatedFields: Object.keys(filteredUpdateData),
+      user: updatedUser, // Return the full updated user object to sync frontend store
     });
   } catch (error) {
     console.error("Error updating user:", error);

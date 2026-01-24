@@ -19,12 +19,13 @@ export const useOnboarding = () => {
   const { updateUserMutation } = useApis();
 
   const [showWelcome, setShowWelcome] = useState(true);
+  const [showReviewScreen, setShowReviewScreen] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  
+  const [currentAnswer, setCurrentAnswer] = useState<any>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [hasRequestedReview, setHasRequestedReview] = useState(false);
 
-  const answers = useRef<Record<number, string>>({});
+  const answers = useRef<Record<number, any>>({});
 
   const {
     animationStyles,
@@ -43,25 +44,13 @@ export const useOnboarding = () => {
     if (showWelcome) {
       animateWelcome();
     }
-  }, [showWelcome, animateWelcome]);
+  }, [showWelcome]);
 
   useEffect(() => {
-    animateProgress(currentQuestionIndex, questions.length);
+    animateProgress(0, questions.length);
     animateCardTransition();
     resetOptionAnimations();
-
-    if (currentQuestionIndex === 3 && !hasRequestedReview) {
-      requestStoreReview();
-      setHasRequestedReview(true);
-    }
-  }, [
-    currentQuestionIndex,
-    animateProgress,
-    animateCardTransition,
-    resetOptionAnimations,
-    questions.length,
-    hasRequestedReview,
-  ]);
+  }, []);
 
   const requestStoreReview = async () => {
     try {
@@ -78,19 +67,36 @@ export const useOnboarding = () => {
     const payload: Record<string, any> = {};
 
     const questionMapping: Record<number, string> = {
-      1: "biggestChallenge",
-      2: "studyMethod",
-      3: "examConfidence",
-      4: "studyMaterials",
-      5: "age",
-      6: "strugglingSubjects",
-      7: "studyNeeds",
+      1: "motivation",
+      2: "studyConfidence",
+      3: "studyChallenges",
+      4: "studyFrequency",
+      5: "mainGoal",
+      6: "learningStyle",
+      7: "studyMaterials",
+      8: "difficultSubjects",
+      9: "procrastinationLevel",
+      10: "examTimeline",
+      11: "activeRecallExperience",
+      12: "spacedRepetitionExperience",
+      13: "studyEnvironment",
+      14: "focusDuration",
+      15: "socialPreference",
+      16: "toolsUsed",
+      17: "motivationFactors",
+      18: "appExpectations",
+      19: "featureInterest",
+      20: "age",
     };
 
     Object.entries(questionMapping).forEach(([questionId, payloadKey]) => {
       const answer = answers.current[parseInt(questionId)];
-      if (answer) {
-        payload[payloadKey] = questionId === "5" ? parseInt(answer) : answer;
+      if (answer !== undefined && answer !== null) {
+        if (payloadKey === "age") {
+            payload[payloadKey] = parseInt(answer as string);
+        } else {
+            payload[payloadKey] = answer;
+        }
       }
     });
 
@@ -147,17 +153,44 @@ export const useOnboarding = () => {
     }, 400);
   }, [animateWelcomeExit]);
 
+  const nextStep = useCallback(() => {
+      if (currentQuestionIndex < questions.length - 1) {
+        const nextIndex = currentQuestionIndex + 1;
+        setCurrentQuestionIndex(nextIndex);
+        
+        const nextQuestion = questions[nextIndex];
+        let defaultAnswer = null;
+        
+        if (nextQuestion.type === 'multiple' || nextQuestion.type === 'chips') {
+            defaultAnswer = [];
+        } else if (nextQuestion.type === 'slider') {
+        }
+        
+        setCurrentAnswer(defaultAnswer);
+        
+        animateProgress(nextIndex, questions.length);
+        animateCardTransition();
+        resetOptionAnimations();
+        
+      } else {
+        setShowReviewScreen(true);
+      }
+      setIsAnimating(false);
+  }, [currentQuestionIndex, questions, animateProgress, animateCardTransition, resetOptionAnimations]);
+
   const handleAnswer = useCallback(
     async (answer: string, optionIndex: number) => {
       if (isAnimating) return;
 
       setIsAnimating(true);
-      setSelectedAnswer(answer);
+      setCurrentAnswer(answer);
 
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       const currentQuestion = questions[currentQuestionIndex];
-      animateOptionSelection(optionIndex, currentQuestion.options.length);
+      if (currentQuestion.options && currentQuestion.options.length > 0) {
+           animateOptionSelection(optionIndex, currentQuestion.options.length);
+      }
 
       answers.current = {
         ...answers.current,
@@ -167,13 +200,7 @@ export const useOnboarding = () => {
       animateCardSelection();
 
       setTimeout(async () => {
-        if (currentQuestionIndex < questions.length - 1) {
-          setCurrentQuestionIndex((prev) => prev + 1);
-          setSelectedAnswer(null);
-        } else {
-          await handleOnboarding();
-        }
-        setIsAnimating(false);
+        nextStep();
       }, ONBOARDING_CONFIG.animationDurations.progress);
     },
     [
@@ -182,19 +209,62 @@ export const useOnboarding = () => {
       questions,
       animateOptionSelection,
       animateCardSelection,
-      handleOnboarding,
+      nextStep,
     ]
   );
+
+  const handleToggleAnswer = useCallback(async (value: string) => {
+      const currentQuestion = questions[currentQuestionIndex];
+      let newAnswer: string[] = Array.isArray(currentAnswer) ? [...currentAnswer] : [];
+      
+      if (newAnswer.includes(value)) {
+          newAnswer = newAnswer.filter(a => a !== value);
+      } else {
+          if (currentQuestion.maxSelections && newAnswer.length >= currentQuestion.maxSelections) {
+               await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+               return; 
+          }
+          newAnswer.push(value);
+      }
+      
+      setCurrentAnswer(newAnswer);
+      await Haptics.selectionAsync();
+  }, [currentAnswer, currentQuestionIndex, questions]);
+
+  const handleNext = useCallback(async (value?: any) => {
+      if (isAnimating) return;
+      setIsAnimating(true);
+
+      const valToSave = value !== undefined ? value : currentAnswer;
+      
+      answers.current = {
+        ...answers.current,
+        [questions[currentQuestionIndex].id]: valToSave,
+      };
+
+      animateCardSelection();
+
+       setTimeout(async () => {
+        nextStep();
+      }, 300);
+
+  }, [currentAnswer, isAnimating, questions, currentQuestionIndex, animateCardSelection, nextStep]);
 
   return {
     showWelcome,
     currentQuestionIndex,
-    selectedAnswer,
+    currentAnswer,
     isAnimating,
     questions,
 
     handleStartOnboarding,
     handleAnswer,
+    handleToggleAnswer,
+    handleNext,
+    
+    handleOnboarding,
+    showReviewScreen,
+    requestStoreReview,
     isUpdatingUser: updateUserMutation.isPending,
 
     ...animationStyles,

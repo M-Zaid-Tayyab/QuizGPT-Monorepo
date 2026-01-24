@@ -3,8 +3,12 @@ import React from "react";
 import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
+  ChipsQuestion,
+  MultiSelectQuestion,
   ProgressBar,
   QuestionCard,
+  ReviewRequestScreen,
+  SliderQuestion,
   TextInputQuestion,
   WelcomeScreen,
 } from "../components";
@@ -15,11 +19,13 @@ const Onboarding: React.FC = () => {
   const {
     showWelcome,
     currentQuestionIndex,
-    selectedAnswer,
+    currentAnswer,
     isAnimating,
     questions,
     handleStartOnboarding,
     handleAnswer,
+    handleToggleAnswer,
+    handleNext,
     progressBarAnimatedStyle,
     cardAnimatedStyle,
     iconAnimatedStyle,
@@ -27,8 +33,94 @@ const Onboarding: React.FC = () => {
     floatingIconStyle,
     getOptionAnimatedStyle,
     isUpdatingUser,
+    showReviewScreen,
+    requestStoreReview,
+    handleOnboarding,
   } = useOnboarding();
   const { user } = useUserStore();
+
+  const renderQuestion = () => {
+    const question = questions[currentQuestionIndex];
+
+    switch (question.type) {
+      case "slider":
+        return (
+          <SliderQuestion
+            question={question.question}
+            subtitle={question.subtitle}
+            icon={question.icon}
+            iconColor={question.iconColor}
+            min={question.min || 1}
+            max={question.max || 10}
+            step={question.step || 1}
+            labels={question.sliderLabels}
+            cardAnimatedStyle={cardAnimatedStyle}
+            iconAnimatedStyle={iconAnimatedStyle}
+            onAnswer={handleNext}
+            isAnimating={isAnimating}
+          />
+        );
+      case "multiple":
+        const multiAnswers = Array.isArray(currentAnswer) ? currentAnswer : [];
+        return (
+          <MultiSelectQuestion
+            question={question}
+            questionIndex={currentQuestionIndex}
+            selectedAnswers={multiAnswers}
+            isAnimating={isAnimating}
+            cardAnimatedStyle={cardAnimatedStyle}
+            iconAnimatedStyle={iconAnimatedStyle}
+            getOptionAnimatedStyle={getOptionAnimatedStyle}
+            onToggleAnswer={handleToggleAnswer}
+            onContinue={() => handleNext()}
+          />
+        );
+      case "chips":
+        const chipsAnswers = Array.isArray(currentAnswer) ? currentAnswer : [];
+        return (
+          <ChipsQuestion
+            question={question}
+            selectedAnswers={chipsAnswers}
+            isAnimating={isAnimating}
+            cardAnimatedStyle={cardAnimatedStyle}
+            iconAnimatedStyle={iconAnimatedStyle}
+            onToggleAnswer={handleToggleAnswer}
+            onContinue={() => handleNext()}
+          />
+        );
+      case "text":
+        return (
+          <TextInputQuestion
+            question={question.question}
+            subtitle={question.subtitle}
+            icon={question.icon}
+            iconColor={question.iconColor}
+            placeholder={question.placeholder || ""}
+            keyboardType={question.keyboardType}
+            maxLength={question.maxLength}
+            cardAnimatedStyle={cardAnimatedStyle}
+            iconAnimatedStyle={iconAnimatedStyle}
+            onAnswer={handleNext}
+            isAnimating={isAnimating}
+          />
+        );
+      case "single":
+      default:
+        const singleAnswer = typeof currentAnswer === 'string' ? currentAnswer : null;
+        return (
+          <QuestionCard
+            question={question}
+            questionIndex={currentQuestionIndex}
+            selectedAnswer={singleAnswer}
+            isAnimating={isAnimating}
+            cardAnimatedStyle={cardAnimatedStyle}
+            iconAnimatedStyle={iconAnimatedStyle}
+            getOptionAnimatedStyle={getOptionAnimatedStyle}
+            onAnswer={handleAnswer}
+          />
+        );
+    }
+  };
 
   return (
     <KeyboardAwareScrollView
@@ -43,6 +135,11 @@ const Onboarding: React.FC = () => {
           floatingIconStyle={floatingIconStyle}
           onStartOnboarding={handleStartOnboarding}
         />
+      ) : showReviewScreen ? (
+        <ReviewRequestScreen
+          onReview={requestStoreReview}
+          onComplete={handleOnboarding}
+        />
       ) : (
         <>
           <ProgressBar
@@ -51,34 +148,7 @@ const Onboarding: React.FC = () => {
             animatedStyle={progressBarAnimatedStyle}
           />
 
-          <View className="flex-1 px-4">
-            {questions[currentQuestionIndex].isTextInput ? (
-              <TextInputQuestion
-                question={questions[currentQuestionIndex].question}
-                subtitle={questions[currentQuestionIndex].subtitle}
-                icon={questions[currentQuestionIndex].icon}
-                iconColor={questions[currentQuestionIndex].iconColor}
-                placeholder={questions[currentQuestionIndex].placeholder || ""}
-                keyboardType={questions[currentQuestionIndex].keyboardType}
-                maxLength={questions[currentQuestionIndex].maxLength}
-                cardAnimatedStyle={cardAnimatedStyle}
-                iconAnimatedStyle={iconAnimatedStyle}
-                onAnswer={(value) => handleAnswer(value, 0)}
-                isAnimating={isAnimating}
-              />
-            ) : (
-              <QuestionCard
-                question={questions[currentQuestionIndex]}
-                questionIndex={currentQuestionIndex}
-                selectedAnswer={selectedAnswer}
-                isAnimating={isAnimating}
-                cardAnimatedStyle={cardAnimatedStyle}
-                iconAnimatedStyle={iconAnimatedStyle}
-                getOptionAnimatedStyle={getOptionAnimatedStyle}
-                onAnswer={handleAnswer}
-              />
-            )}
-          </View>
+          <View className="flex-1 px-4">{renderQuestion()}</View>
         </>
       )}
       <AnimatedLoadingModal
