@@ -4,7 +4,7 @@ import { useUserStore } from "../modules/auth/store/userStore";
 const isLocal = __DEV__;
 const isDev = __DEV__;
 const ROOT_URL = isLocal
-  ? "https://d0c833c8192f.ngrok-free.app"
+  ? "https://93a8491934d6.ngrok-free.app"
   : isDev
   ? "https://quizgpt-backend-development.up.railway.app"
   : "https://quizgpt-backend-production.up.railway.app";
