@@ -91,16 +91,17 @@ const ReviewRequestScreen: React.FC<ReviewRequestScreenProps> = ({
           </Animated.View>
         ))}
       </View>
-
+      {showContinueButton && (
       <Animated.View 
         entering={FadeInDown.delay(600).springify()}
-        className={`mb-8 ${showContinueButton ? "opacity-100" : "opacity-0"}`}
+        className={`mb-8`}
       >
         <PrimaryButton
           title="Continue"
           onPress={onComplete}
         />
       </Animated.View>
+      )}
     </View>
   );
 };
