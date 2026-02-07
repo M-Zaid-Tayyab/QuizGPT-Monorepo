@@ -5,6 +5,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import {
   ChipsQuestion,
   MultiSelectQuestion,
+  OnboardingAhaScreen,
   ProgressBar,
   QuestionCard,
   ReviewRequestScreen,
@@ -34,6 +35,11 @@ const Onboarding: React.FC = () => {
     getOptionAnimatedStyle,
     isUpdatingUser,
     showReviewScreen,
+    showAhaScreen,
+    onAhaComplete,
+    previewResultRef,
+    createOnboardingPayload,
+    fetchOnboardingPreview,
     requestStoreReview,
     handleOnboarding,
   } = useOnboarding();
@@ -106,7 +112,8 @@ const Onboarding: React.FC = () => {
         );
       case "single":
       default:
-        const singleAnswer = typeof currentAnswer === 'string' ? currentAnswer : null;
+        const singleAnswer =
+          typeof currentAnswer === "string" ? currentAnswer : null;
         return (
           <QuestionCard
             question={question}
@@ -134,6 +141,13 @@ const Onboarding: React.FC = () => {
           animatedStyle={welcomeAnimatedStyle}
           floatingIconStyle={floatingIconStyle}
           onStartOnboarding={handleStartOnboarding}
+        />
+      ) : showAhaScreen ? (
+        <OnboardingAhaScreen
+          cachedPreview={previewResultRef.current}
+          onComplete={onAhaComplete}
+          fetchPreview={fetchOnboardingPreview}
+          fullPayload={createOnboardingPayload()}
         />
       ) : showReviewScreen ? (
         <ReviewRequestScreen

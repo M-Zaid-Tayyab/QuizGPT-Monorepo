@@ -4,10 +4,10 @@ import { useUserStore } from "../modules/auth/store/userStore";
 const isLocal = __DEV__;
 const isDev = __DEV__;
 const ROOT_URL = isLocal
-  ? "https://93a8491934d6.ngrok-free.app"
+  ? "https://2c8d-103-26-82-1.ngrok-free.app"
   : isDev
-  ? "https://quizgpt-backend-development.up.railway.app"
-  : "https://quizgpt-backend-production.up.railway.app";
+    ? "https://quizgpt-backend-development.up.railway.app"
+    : "https://quizgpt-backend-production.up.railway.app";
 const BASE_URL = `${ROOT_URL}/api/`;
 
 const createClient = (isFormData = false) => {
@@ -32,7 +32,7 @@ const createClient = (isFormData = false) => {
         `${config?.baseURL}${config.url}`,
         config?.params
           ? JSON.stringify(config?.params)
-          : JSON.stringify(config?.data)
+          : JSON.stringify(config?.data),
       );
 
       return requestConfig;
@@ -40,10 +40,10 @@ const createClient = (isFormData = false) => {
     (err) => {
       console.error(
         "Request Error =>",
-        err.response ? err.response.data : err.message
+        err.response ? err.response.data : err.message,
       );
       return Promise.reject(err);
-    }
+    },
   );
 
   return client;

@@ -6,6 +6,7 @@ import appFlagsRoutes from "./routes/appFlags";
 import authRoutes from "./routes/authRoutes";
 import feedRoutes from "./routes/feedRoutes";
 import flashcardRoutes from "./routes/flashcardRoutes";
+import onboardingRoutes from "./routes/onboardingRoutes";
 import quizRoutes from "./routes/quizRoutes";
 import searchRoutes from "./routes/searchRoutes";
 dotenv.config();
@@ -19,6 +20,7 @@ app.use(cors());
 connectDB();
 
 app.use("/api/auth", authRoutes);
+app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/search", searchRoutes);

@@ -1,3 +1,4 @@
+import { client } from "@/app/services";
 import { useUserStore } from "@/modules/auth/store/userStore";
 import { useNavigation } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
@@ -7,6 +8,17 @@ import Toast from "react-native-toast-message";
 import useApis from "./useApis";
 import { useOnboardingAnimations } from "./useOnboardingAnimations";
 import { ONBOARDING_CONFIG } from "./useOnboardingConfig";
+
+export interface OnboardingPreviewResult {
+  quiz: { _id: string; title: string; questions: any[] };
+  flashcard: {
+    front: string;
+    back: string;
+    difficulty: string;
+    category: string;
+    tags?: string[];
+  };
+}
 
 type NavigationProp = {
   reset: (params: { index: number; routes: { name: string }[] }) => void;
@@ -20,12 +32,14 @@ export const useOnboarding = () => {
 
   const [showWelcome, setShowWelcome] = useState(true);
   const [showReviewScreen, setShowReviewScreen] = useState(false);
+  const [showAhaScreen, setShowAhaScreen] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  
+
   const [currentAnswer, setCurrentAnswer] = useState<any>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
   const answers = useRef<Record<number, any>>({});
+  const previewResultRef = useRef<OnboardingPreviewResult | null>(null);
 
   const {
     animationStyles,
@@ -93,15 +107,55 @@ export const useOnboarding = () => {
       const answer = answers.current[parseInt(questionId)];
       if (answer !== undefined && answer !== null) {
         if (payloadKey === "age") {
-            payload[payloadKey] = parseInt(answer as string);
+          payload[payloadKey] = parseInt(answer as string);
         } else {
-            payload[payloadKey] = answer;
+          payload[payloadKey] = answer;
         }
       }
     });
 
     return payload;
   }, []);
+
+  /** Build payload for questions 1-8 only (for early prefetch after Q8). */
+  const createPartialPayloadQ1toQ8 = useCallback(() => {
+    const payload: Record<string, any> = {};
+    const questionMapping: Record<number, string> = {
+      1: "motivation",
+      2: "studyConfidence",
+      3: "studyChallenges",
+      4: "studyFrequency",
+      5: "mainGoal",
+      6: "learningStyle",
+      7: "studyMaterials",
+      8: "difficultSubjects",
+    };
+    Object.entries(questionMapping).forEach(([questionId, payloadKey]) => {
+      const answer = answers.current[parseInt(questionId)];
+      if (answer !== undefined && answer !== null) {
+        payload[payloadKey] = answer;
+      }
+    });
+    return payload;
+  }, []);
+
+  const fetchOnboardingPreview = useCallback(
+    async (
+      payload: Record<string, any>
+    ): Promise<OnboardingPreviewResult | null> => {
+      try {
+        const { data } = await client.post<OnboardingPreviewResult>(
+          "onboarding/preview",
+          payload
+        );
+        return data?.quiz && data?.flashcard ? data : null;
+      } catch (err) {
+        console.warn("Onboarding preview fetch failed:", err);
+        return null;
+      }
+    },
+    []
+  );
 
   const handleOnboarding = useCallback(async () => {
     try {
@@ -154,29 +208,50 @@ export const useOnboarding = () => {
   }, [animateWelcomeExit]);
 
   const nextStep = useCallback(() => {
-      if (currentQuestionIndex < questions.length - 1) {
-        const nextIndex = currentQuestionIndex + 1;
-        setCurrentQuestionIndex(nextIndex);
-        
-        const nextQuestion = questions[nextIndex];
-        let defaultAnswer = null;
-        
-        if (nextQuestion.type === 'multiple' || nextQuestion.type === 'chips') {
-            defaultAnswer = [];
-        } else if (nextQuestion.type === 'slider') {
-        }
-        
-        setCurrentAnswer(defaultAnswer);
-        
-        animateProgress(nextIndex, questions.length);
-        animateCardTransition();
-        resetOptionAnimations();
-        
-      } else {
-        setShowReviewScreen(true);
+    if (currentQuestionIndex < questions.length - 1) {
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
+
+      const nextQuestion = questions[nextIndex];
+      let defaultAnswer = null;
+      if (nextQuestion.type === "multiple" || nextQuestion.type === "chips") {
+        defaultAnswer = [];
+      } else if (nextQuestion.type === "slider") {
+        defaultAnswer = null;
       }
-      setIsAnimating(false);
-  }, [currentQuestionIndex, questions, animateProgress, animateCardTransition, resetOptionAnimations]);
+      setCurrentAnswer(defaultAnswer);
+
+      animateProgress(nextIndex, questions.length);
+      animateCardTransition();
+      resetOptionAnimations();
+
+      // Prefetch Aha preview when user completes Q8 (we have answers 1-8 now)
+      if (nextIndex === 8) {
+        const partialPayload = createPartialPayloadQ1toQ8();
+        if (Object.keys(partialPayload).length > 0) {
+          fetchOnboardingPreview(partialPayload).then((result) => {
+            if (result) previewResultRef.current = result;
+          });
+        }
+      }
+    } else {
+      setShowAhaScreen(true);
+    }
+    setIsAnimating(false);
+  }, [
+    currentQuestionIndex,
+    questions,
+    animateProgress,
+    animateCardTransition,
+    resetOptionAnimations,
+    createPartialPayloadQ1toQ8,
+    fetchOnboardingPreview,
+  ]);
+
+  const onAhaComplete = useCallback(() => {
+    setShowAhaScreen(false);
+    setShowReviewScreen(true);
+  }, []);
 
   const handleAnswer = useCallback(
     async (answer: string, optionIndex: number) => {
@@ -189,7 +264,7 @@ export const useOnboarding = () => {
 
       const currentQuestion = questions[currentQuestionIndex];
       if (currentQuestion.options && currentQuestion.options.length > 0) {
-           animateOptionSelection(optionIndex, currentQuestion.options.length);
+        animateOptionSelection(optionIndex, currentQuestion.options.length);
       }
 
       answers.current = {
@@ -213,30 +288,41 @@ export const useOnboarding = () => {
     ]
   );
 
-  const handleToggleAnswer = useCallback(async (value: string) => {
+  const handleToggleAnswer = useCallback(
+    async (value: string) => {
       const currentQuestion = questions[currentQuestionIndex];
-      let newAnswer: string[] = Array.isArray(currentAnswer) ? [...currentAnswer] : [];
-      
+      let newAnswer: string[] = Array.isArray(currentAnswer)
+        ? [...currentAnswer]
+        : [];
+
       if (newAnswer.includes(value)) {
-          newAnswer = newAnswer.filter(a => a !== value);
+        newAnswer = newAnswer.filter((a) => a !== value);
       } else {
-          if (currentQuestion.maxSelections && newAnswer.length >= currentQuestion.maxSelections) {
-               await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-               return; 
-          }
-          newAnswer.push(value);
+        if (
+          currentQuestion.maxSelections &&
+          newAnswer.length >= currentQuestion.maxSelections
+        ) {
+          await Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Warning
+          );
+          return;
+        }
+        newAnswer.push(value);
       }
-      
+
       setCurrentAnswer(newAnswer);
       await Haptics.selectionAsync();
-  }, [currentAnswer, currentQuestionIndex, questions]);
+    },
+    [currentAnswer, currentQuestionIndex, questions]
+  );
 
-  const handleNext = useCallback(async (value?: any) => {
+  const handleNext = useCallback(
+    async (value?: any) => {
       if (isAnimating) return;
       setIsAnimating(true);
 
       const valToSave = value !== undefined ? value : currentAnswer;
-      
+
       answers.current = {
         ...answers.current,
         [questions[currentQuestionIndex].id]: valToSave,
@@ -244,11 +330,19 @@ export const useOnboarding = () => {
 
       animateCardSelection();
 
-       setTimeout(async () => {
+      setTimeout(async () => {
         nextStep();
       }, 300);
-
-  }, [currentAnswer, isAnimating, questions, currentQuestionIndex, animateCardSelection, nextStep]);
+    },
+    [
+      currentAnswer,
+      isAnimating,
+      questions,
+      currentQuestionIndex,
+      animateCardSelection,
+      nextStep,
+    ]
+  );
 
   return {
     showWelcome,
@@ -261,9 +355,14 @@ export const useOnboarding = () => {
     handleAnswer,
     handleToggleAnswer,
     handleNext,
-    
+
     handleOnboarding,
     showReviewScreen,
+    showAhaScreen,
+    onAhaComplete,
+    previewResultRef,
+    createOnboardingPayload,
+    fetchOnboardingPreview,
     requestStoreReview,
     isUpdatingUser: updateUserMutation.isPending,
 

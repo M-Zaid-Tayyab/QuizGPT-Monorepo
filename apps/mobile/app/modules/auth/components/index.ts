@@ -1,5 +1,6 @@
 export { default as ChipsQuestion } from "./ChipsQuestion";
 export { default as MultiSelectQuestion } from "./MultiSelectQuestion";
+export { default as OnboardingAhaScreen } from "./OnboardingAhaScreen";
 export { default as OptionItem } from "./OptionItem";
 export { default as ProgressBar } from "./ProgressBar";
 export { default as QuestionCard } from "./QuestionCard";

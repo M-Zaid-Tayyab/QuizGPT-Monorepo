@@ -54,6 +54,91 @@ export class FlashcardGenerator {
     }
   }
 
+  static async generateFromOnboardingContext(
+    payload: Record<string, unknown>,
+    user: { age?: number; grade?: string }
+  ): Promise<Flashcard> {
+    const prompt = this.buildOnboardingFlashcardPrompt(payload, user);
+    try {
+      const completion = await openai.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        model: "gpt-3.5-turbo",
+        response_format: { type: "json_object" },
+        temperature: 0.6,
+      });
+      const response = completion.choices[0].message.content;
+      if (!response) throw new Error("No response from AI");
+      const parsed = JSON.parse(response);
+      const cards = this.validateAndCleanFlashcards(parsed.flashcards || []);
+      if (cards.length === 0) {
+        return {
+          front: "What is active recall?",
+          back: "A study technique where you retrieve information from memory instead of just re-reading. It strengthens long-term retention.",
+          difficulty: "Medium",
+          category: "Study Skills",
+          tags: ["study", "memory"],
+        };
+      }
+      return cards[0];
+    } catch (error) {
+      console.error("Error generating onboarding flashcard:", error);
+      return {
+        front: "What is active recall?",
+        back: "A study technique where you retrieve information from memory instead of just re-reading. It strengthens long-term retention.",
+        difficulty: "Medium",
+        category: "Study Skills",
+        tags: ["study", "memory"],
+      };
+    }
+  }
+
+  private static buildOnboardingFlashcardPrompt(
+    payload: Record<string, unknown>,
+    user: { age?: number; grade?: string }
+  ): string {
+    const age = user.age ?? 20;
+    const grade = (user.grade as string) || "College";
+    const mainGoal = payload.mainGoal || "ace exam";
+    const difficultSubjects = payload.difficultSubjects || "general";
+    const motivation = payload.motivation || "exam prep";
+    const studyChallenges = Array.isArray(payload.studyChallenges)
+      ? (payload.studyChallenges as string[]).join(", ")
+      : String(payload.studyChallenges || "understanding concepts");
+
+    return `ROLE: You are an expert educational content creator.
+
+TASK: Generate exactly ONE high-quality flashcard for an onboarding preview. The user has not provided study material—create one flashcard that would be useful for a ${age}-year-old ${grade} student with this profile:
+
+- Main goal: ${mainGoal}
+- Difficult subjects / focus: ${difficultSubjects}
+- Motivation: ${motivation}
+- Study challenges: ${studyChallenges}
+
+This preview will be the user's first experience—choose a topic that feels personally relevant so they see the value.
+
+TOPIC SELECTION: If difficult subjects include math, science, history, literature, languages, coding, business, social_studies, or arts, prefer a core concept from one of those. If main goal is ace_exam, prefer an exam-style concept from their difficult subjects. If main goal is build_habit or learn_faster (or similar), consider study skills or general knowledge. Otherwise pick a broadly useful concept.
+
+REQUIREMENTS:
+- Front: One concise question or term (max 100 characters).
+- Back: Clear answer (max 200 characters).
+- difficulty: "Easy" or "Medium" or "Hard"
+- category: Short label (e.g. "Biology", "Study Skills")
+- tags: 2-3 tags array
+
+RESPONSE (JSON only):
+{
+  "flashcards": [
+    {
+      "front": "...",
+      "back": "...",
+      "difficulty": "Medium",
+      "category": "...",
+      "tags": ["tag1", "tag2"]
+    }
+  ]
+}`;
+  }
+
   static async generateFromQuiz(quiz: any): Promise<Flashcard[]> {
     const flashcards: Flashcard[] = [];
 
@@ -137,7 +222,9 @@ RESPONSE (JSON only):
 
     return `ROLE: You are an expert educational content creator specializing in creating effective study materials for spaced repetition learning.
 
-TASK: Generate ${count} high-quality flashcards from this study material for a ${age ? `${age}-year-old ` : ""}student in ${grade} grade.
+TASK: Generate ${count} high-quality flashcards from this study material for a ${
+      age ? `${age}-year-old ` : ""
+    }student in ${grade} grade.
 
 STUDY MATERIAL:
 ${text}

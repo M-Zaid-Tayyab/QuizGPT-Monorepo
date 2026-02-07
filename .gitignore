@@ -21,6 +21,10 @@ apps/mobile/ios/
 .env.production.local
 .env.*.local
 
+.agents
+.claude
+.windsurf
+
 # Logs
 logs
 *.log
